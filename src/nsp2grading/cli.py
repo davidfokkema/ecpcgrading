@@ -16,15 +16,23 @@ def cli():
 @cli.command()
 def init():
     """Initialize configuration file for grading."""
-    cwd = Path.cwd()
-    for directory in [cwd] + list(cwd.parents):
-        if (directory / CONFIG_FILE).exists():
-            print(f"Configuration file found. Doing nothing.")
-            break
+    config_path = find_config_file()
+    if config_path is not None:
+        print(f"Configuration file found. Doing nothing.")
     else:
         print("Creating default config file...")
         default_config = importlib.resources.read_text(*DEFAULT_CONFIG)
         Path(CONFIG_FILE).write_text(default_config)
+
+
+def find_config_file():
+    """Search current working directory and its parents for config file."""
+    cwd = Path.cwd()
+    for directory in [cwd] + list(cwd.parents):
+        config_path = directory / CONFIG_FILE
+        if config_path.exists():
+            return config_path
+    return None
 
 
 if __name__ == "__main__":
