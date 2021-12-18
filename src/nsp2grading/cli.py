@@ -80,24 +80,22 @@ def list_environments():
 
 
 @env.command("create")
-def create_environments():
+@click.pass_context
+def create_environments(ctx):
     """Create conda environments for all students."""
-    config = read_config()
-    if config is None:
-        print("[red bold]Error: no configuration file found.")
-    else:
-        grading_home = find_config_file().parent
-        code_dir = grading_home / config["general"]["code_dir"]
-        students = [p.name for p in code_dir.iterdir() if p.is_dir()]
+    config = ctx.obj["config"]
+    grading_home = ctx.obj["grading_home"]
+    code_dir = grading_home / config["general"]["code_dir"]
+    students = [p.name for p in code_dir.iterdir() if p.is_dir()]
 
-        for student in track(students, description="Creating environments..."):
-            env_name = f"env_{student}"
-            print(f"[blue]Creating {env_name}...")
-            subprocess.run(
-                f"conda create -n {env_name} python=3.9 --yes",
-                shell=True,
-                capture_output=True,
-            )
+    for student in track(students, description="Creating environments..."):
+        env_name = f"env_{student}"
+        print(f"[blue]Creating {env_name}...")
+        subprocess.run(
+            f"conda create -n {env_name} python=3.9 --yes",
+            shell=True,
+            capture_output=True,
+        )
 
 
 def find_config_file():
