@@ -131,6 +131,55 @@ def remove_environments(ctx):
                 continue
 
 
+@env.command("install")
+@click.pass_context
+def install_environments(ctx):
+    """Install and import packages for all existing student environments.
+
+    Run `poetry install` to install all necessary packages and run `python -c
+    "help('modules')"` to import all packages. This will trigger OS-specific
+    malware scanners which will greatly speed up future imports.
+    """
+    environments = get_all_environments()
+    students = get_students(ctx)
+    for student in track(students, description="Installing environments..."):
+        env_name = make_env_name(student)
+        if env_name in environments:
+            project_path = find_pyproject_toml(ctx, student)
+            if project_path is None:
+                print(f"[bold red]Error: pyproject.toml not found for {student}")
+                continue
+            else:
+                directory = project_path.parent
+                print(f"[blue]Installing {env_name}...")
+                try:
+                    subprocess.run(
+                        f"conda run -n {env_name} poetry install",
+                        shell=True,
+                        cwd=directory,
+                        capture_output=True,
+                        check=True,
+                    )
+                except subprocess.CalledProcessError as exc:
+                    print(
+                        f"[bold red]Error installing environment: {exc.stderr.decode()}"
+                    )
+                    continue
+                print(f"[blue]Importing {env_name}...")
+                try:
+                    subprocess.run(
+                        f"""conda run -n {env_name} python -c "help('modules')" """,
+                        shell=True,
+                        capture_output=True,
+                        check=True,
+                    )
+                except subprocess.CalledProcessError as exc:
+                    print(
+                        f"[bold red]Error importing environment: {exc.stderr.decode()}"
+                    )
+                    continue
+
+
 def find_config_file():
     """Search current working directory and its parents for config file."""
     cwd = Path.cwd()
@@ -198,6 +247,25 @@ def get_students(ctx):
     code_dir = grading_home / config["general"]["code_dir"]
     students = [p.name for p in code_dir.iterdir() if p.is_dir()]
     return students
+
+
+def find_pyproject_toml(ctx, student):
+    """Find the pyproject.toml file in a student environment.
+
+    Args:
+        ctx (click.Context): The click context object.
+        student (str): The name of the student.
+
+    Returns:
+        Path: the path to the pyproject.toml file.
+    """
+    config = ctx.obj["config"]
+    grading_home = ctx.obj["grading_home"]
+    code_dir = grading_home / config["general"]["code_dir"]
+    try:
+        return next((code_dir / student).glob("**/pyproject.toml"))
+    except StopIteration:
+        return None
 
 
 if __name__ == "__main__":
