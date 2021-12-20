@@ -85,25 +85,6 @@ def list_environments(ctx):
             print(student_env)
 
 
-def get_students(ctx):
-    """Get a list of students.
-
-    Return a list of students that have code directories available. The location
-    of the code directory is retrieved from the click.Context object.
-
-    Args:
-        ctx (click.Context): The click context object.
-
-    Returns:
-        list: A list of strings of student names.
-    """
-    config = ctx.obj["config"]
-    grading_home = ctx.obj["grading_home"]
-    code_dir = grading_home / config["general"]["code_dir"]
-    students = [p.name for p in code_dir.iterdir() if p.is_dir()]
-    return students
-
-
 @env.command("create")
 @click.pass_context
 def create_environments(ctx):
@@ -171,6 +152,25 @@ def get_all_environments():
     environment_paths = [Path(p) for p in json.loads(process.stdout)["envs"]]
     environments = [p.name for p in environment_paths if p.parent.name == "envs"]
     return environments
+
+
+def get_students(ctx):
+    """Get a list of students.
+
+    Return a list of students that have code directories available. The location
+    of the code directory is retrieved from the click.Context object.
+
+    Args:
+        ctx (click.Context): The click context object.
+
+    Returns:
+        list: A list of strings of student names.
+    """
+    config = ctx.obj["config"]
+    grading_home = ctx.obj["grading_home"]
+    code_dir = grading_home / config["general"]["code_dir"]
+    students = [p.name for p in code_dir.iterdir() if p.is_dir()]
+    return students
 
 
 if __name__ == "__main__":
