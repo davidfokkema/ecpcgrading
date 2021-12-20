@@ -1,4 +1,5 @@
 import importlib.resources
+import json
 import re
 import subprocess
 import zipfile
@@ -74,9 +75,33 @@ def env():
 
 
 @env.command("list")
-def list_environments():
+@click.pass_context
+def list_environments(ctx):
     """List all student conda environments."""
-    pass
+    environments = get_all_environments()
+    for student in get_students(ctx):
+        student_env = make_env_name(student)
+        if student_env in environments:
+            print(student_env)
+
+
+def get_students(ctx):
+    """Get a list of students.
+
+    Return a list of students that have code directories available. The location
+    of the code directory is retrieved from the click.Context object.
+
+    Args:
+        ctx (click.Context): The click context object.
+
+    Returns:
+        list: A list of strings of student names.
+    """
+    config = ctx.obj["config"]
+    grading_home = ctx.obj["grading_home"]
+    code_dir = grading_home / config["general"]["code_dir"]
+    students = [p.name for p in code_dir.iterdir() if p.is_dir()]
+    return students
 
 
 @env.command("create")
@@ -89,7 +114,7 @@ def create_environments(ctx):
     students = [p.name for p in code_dir.iterdir() if p.is_dir()]
 
     for student in track(students, description="Creating environments..."):
-        env_name = f"env_{student}"
+        env_name = make_env_name(student)
         print(f"[blue]Creating {env_name}...")
         subprocess.run(
             f"conda create -n {env_name} python=3.9 --yes",
@@ -121,6 +146,31 @@ def read_config(config_path):
         return None
     else:
         return tomlkit.parse(config_path.read_text())
+
+
+def make_env_name(student):
+    """Make up an environment name for a student.
+
+    Args:
+        student (str): Name of the student.
+
+    Returns:
+        str: Name of an environment for the student.
+    """
+    env_name = f"env_{student}"
+    return env_name
+
+
+def get_all_environments():
+    """Get all existing environments.
+
+    Returns:
+        list: A list of strings of existing environment names.
+    """
+    process = subprocess.run("conda env list --json", shell=True, capture_output=True)
+    environment_paths = [Path(p) for p in json.loads(process.stdout)["envs"]]
+    environments = [p.name for p in environment_paths if p.parent.name == "envs"]
+    return environments
 
 
 if __name__ == "__main__":
