@@ -109,6 +109,28 @@ def create_environments(ctx, force):
                 break
 
 
+@env.command("remove")
+@click.pass_context
+def remove_environments(ctx):
+    """Remove all existing student environments."""
+    environments = get_all_environments()
+    students = get_students(ctx)
+    for student in track(students, description="Removing environments..."):
+        env_name = make_env_name(student)
+        if env_name in environments:
+            print(f"[blue]Removing {env_name}...")
+            try:
+                subprocess.run(
+                    f"conda env remove -n {env_name}",
+                    shell=True,
+                    capture_output=True,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as exc:
+                print(f"[bold red]Error removing environment: {exc.stderr.decode()}")
+                continue
+
+
 def find_config_file():
     """Search current working directory and its parents for config file."""
     cwd = Path.cwd()
