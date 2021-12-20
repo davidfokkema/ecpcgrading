@@ -1,5 +1,6 @@
 import importlib.resources
 import json
+from os import environ
 import re
 import subprocess
 import zipfile
@@ -89,19 +90,22 @@ def list_environments(ctx):
 @click.pass_context
 def create_environments(ctx):
     """Create conda environments for all students."""
-    config = ctx.obj["config"]
-    grading_home = ctx.obj["grading_home"]
-    code_dir = grading_home / config["general"]["code_dir"]
-    students = [p.name for p in code_dir.iterdir() if p.is_dir()]
-
+    environments = get_all_environments()
+    students = get_students(ctx)
     for student in track(students, description="Creating environments..."):
         env_name = make_env_name(student)
-        print(f"[blue]Creating {env_name}...")
-        subprocess.run(
-            f"conda create -n {env_name} python=3.9 --yes",
-            shell=True,
-            capture_output=True,
-        )
+        if env_name not in environments:
+            print(f"[blue]Creating {env_name}...")
+            try:
+                subprocess.run(
+                    f"conda create -n {env_name} python=3.9 --yes",
+                    shell=True,
+                    capture_output=True,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as exc:
+                print(f"[bold red]Error creating environment: {exc.stderr.decode()}")
+                break
 
 
 def find_config_file():
