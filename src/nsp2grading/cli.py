@@ -88,13 +88,14 @@ def list_environments(ctx):
 
 @env.command("create")
 @click.pass_context
-def create_environments(ctx):
+@click.option("-f/", "--force/--no-force", default=False)
+def create_environments(ctx, force):
     """Create conda environments for all students."""
     environments = get_all_environments()
     students = get_students(ctx)
     for student in track(students, description="Creating environments..."):
         env_name = make_env_name(student)
-        if env_name not in environments:
+        if env_name not in environments or force is True:
             print(f"[blue]Creating {env_name}...")
             try:
                 subprocess.run(
