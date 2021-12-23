@@ -180,6 +180,54 @@ def install_environments(ctx):
                     continue
 
 
+@cli.group()
+def shell():
+    """Utility functions for shell integration."""
+    pass
+
+
+@shell.command("start")
+@click.pass_context
+def start_grading(ctx):
+    """Start grading students.
+
+    Jump to the first student's project directory and activate the student's
+    environment.
+    """
+    students = get_students(ctx)
+    first_student = students[0]
+    project_path = find_pyproject_toml(ctx, first_student).parent
+    env = make_env_name(first_student)
+    print(f'cd "{project_path}";')
+    print(f"conda activate {env};")
+
+
+@shell.command("next")
+@click.pass_context
+def grade_next_student(ctx):
+    """Start grading the next student.
+
+    Jump to the next student's project directory and activate the student's
+    environment.
+    """
+    config = ctx.obj["config"]
+    grading_home = ctx.obj["grading_home"]
+    code_dir = grading_home / config["general"]["code_dir"]
+
+    cwd = Path.cwd()
+    current_dir = cwd.relative_to(code_dir)
+    current_student = current_dir.parts[0]
+
+    students = get_students(ctx)
+    idx = students.index(current_student)
+    next_student = students[(idx + 1) % len(students)]
+
+    project_path = find_pyproject_toml(ctx, next_student).parent
+    env = make_env_name(next_student)
+    print(f'cd "{project_path}";')
+    print(f"conda activate {env};")
+
+
 def find_config_file():
     """Search current working directory and its parents for config file."""
     cwd = Path.cwd()
@@ -246,7 +294,7 @@ def get_students(ctx):
     grading_home = ctx.obj["grading_home"]
     code_dir = grading_home / config["general"]["code_dir"]
     students = [p.name for p in code_dir.iterdir() if p.is_dir()]
-    return students
+    return sorted(students)
 
 
 def find_pyproject_toml(ctx, student):
