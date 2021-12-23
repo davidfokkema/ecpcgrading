@@ -8,7 +8,7 @@ from pathlib import Path
 
 import click
 import tomlkit
-from rich import print
+from rich import print as rprint
 from rich.progress import track
 
 CONFIG_FILE = "grading.toml"
@@ -21,11 +21,11 @@ RE_STUDENT_NAME = "(?P<name>[a-z]+)_"
 @click.pass_context
 def cli(ctx):
     """Grading tool for NSP2 data acquisition course."""
-    print()
+    rprint()
     config_path = find_config_file()
     if ctx.invoked_subcommand != "init":
         if config_path is None:
-            print(
+            rprint(
                 "[bold red]Configuration file not found. First invoke the 'init' command."
             )
             raise click.Abort()
@@ -41,9 +41,9 @@ def init():
     """Initialize configuration file for grading."""
     config_path = find_config_file()
     if config_path is not None:
-        print(f"Configuration file found. Doing nothing.")
+        rprint(f"Configuration file found. Doing nothing.")
     else:
-        print("Creating default config file...")
+        rprint("Creating default config file...")
         default_config = importlib.resources.read_text(*DEFAULT_CONFIG)
         Path(CONFIG_FILE).write_text(default_config)
 
@@ -66,7 +66,7 @@ def uncompress_submissions(ctx):
             student_dir.mkdir()
             zip_file = zipfile.ZipFile(submission)
             zip_file.extractall(path=student_dir)
-            print(f"[blue]Processed {student}.")
+            rprint(f"[blue]Processed {student}.")
 
 
 @cli.group()
@@ -83,7 +83,7 @@ def list_environments(ctx):
     for student in get_students(ctx):
         student_env = make_env_name(student)
         if student_env in environments:
-            print(student_env)
+            rprint(student_env)
 
 
 @env.command("create")
@@ -96,7 +96,7 @@ def create_environments(ctx, force):
     for student in track(students, description="Creating environments..."):
         env_name = make_env_name(student)
         if env_name not in environments or force is True:
-            print(f"[blue]Creating {env_name}...")
+            rprint(f"[blue]Creating {env_name}...")
             try:
                 subprocess.run(
                     f"conda create -n {env_name} python=3.9 --yes",
@@ -105,7 +105,7 @@ def create_environments(ctx, force):
                     check=True,
                 )
             except subprocess.CalledProcessError as exc:
-                print(f"[bold red]Error creating environment: {exc.stderr.decode()}")
+                rprint(f"[bold red]Error creating environment: {exc.stderr.decode()}")
                 break
 
 
@@ -118,7 +118,7 @@ def remove_environments(ctx):
     for student in track(students, description="Removing environments..."):
         env_name = make_env_name(student)
         if env_name in environments:
-            print(f"[blue]Removing {env_name}...")
+            rprint(f"[blue]Removing {env_name}...")
             try:
                 subprocess.run(
                     f"conda env remove -n {env_name}",
@@ -127,7 +127,7 @@ def remove_environments(ctx):
                     check=True,
                 )
             except subprocess.CalledProcessError as exc:
-                print(f"[bold red]Error removing environment: {exc.stderr.decode()}")
+                rprint(f"[bold red]Error removing environment: {exc.stderr.decode()}")
                 continue
 
 
@@ -147,11 +147,11 @@ def install_environments(ctx):
         if env_name in environments:
             project_path = find_pyproject_toml(ctx, student)
             if project_path is None:
-                print(f"[bold red]Error: pyproject.toml not found for {student}")
+                rprint(f"[bold red]Error: pyproject.toml not found for {student}")
                 continue
             else:
                 directory = project_path.parent
-                print(f"[blue]Installing {env_name}...")
+                rprint(f"[blue]Installing {env_name}...")
                 try:
                     subprocess.run(
                         f"conda run -n {env_name} poetry install",
@@ -161,11 +161,11 @@ def install_environments(ctx):
                         check=True,
                     )
                 except subprocess.CalledProcessError as exc:
-                    print(
+                    rprint(
                         f"[bold red]Error installing environment: {exc.stderr.decode()}"
                     )
                     continue
-                print(f"[blue]Importing {env_name}...")
+                rprint(f"[blue]Importing {env_name}...")
                 try:
                     subprocess.run(
                         f"""conda run -n {env_name} python -c "help('modules')" """,
@@ -174,7 +174,7 @@ def install_environments(ctx):
                         check=True,
                     )
                 except subprocess.CalledProcessError as exc:
-                    print(
+                    rprint(
                         f"[bold red]Error importing environment: {exc.stderr.decode()}"
                     )
                     continue
@@ -184,6 +184,15 @@ def install_environments(ctx):
 def shell():
     """Utility functions for shell integration."""
     pass
+
+
+@shell.command("init.zsh")
+def init_zsh():
+    """Provide zsh shell integration.
+
+    Provides the `gradestart` and `gradenext` shell functions.
+    """
+    print(importlib.resources.read_text("nsp2grading", "init.zsh"))
 
 
 @shell.command("start")
@@ -212,7 +221,7 @@ def start_path(ctx):
     students = get_students(ctx)
     first_student = students[0]
     project_path = find_pyproject_toml(ctx, first_student).parent
-    print(project_path)
+    print(f'"{project_path}"')
 
 
 @shell.command("startenv")
@@ -252,7 +261,7 @@ def next_path(ctx):
     """
     next_student = get_next_student(ctx)
     project_path = find_pyproject_toml(ctx, next_student).parent
-    print(project_path)
+    print(f'"{project_path}"')
 
 
 @shell.command("nextenv")
@@ -365,7 +374,9 @@ def get_next_student(ctx):
         current_dir = cwd.relative_to(code_dir)
         current_student = current_dir.parts[0]
     except (ValueError, IndexError):
-        print("[bold red]You must invoke this command from inside a student directory.")
+        rprint(
+            "[bold red]You must invoke this command from inside a student directory."
+        )
         raise click.Abort()
 
     students = get_students(ctx)
