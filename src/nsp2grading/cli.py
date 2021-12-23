@@ -202,6 +202,32 @@ def start_grading(ctx):
     print(f"conda activate {env};")
 
 
+@shell.command("startpath")
+@click.pass_context
+def start_path(ctx):
+    """Get path for starting grading students.
+
+    Get the first student's project directory.
+    """
+    students = get_students(ctx)
+    first_student = students[0]
+    project_path = find_pyproject_toml(ctx, first_student).parent
+    print(project_path)
+
+
+@shell.command("startenv")
+@click.pass_context
+def start_env(ctx):
+    """Get env for starting grading students.
+
+    Get the first student's environment name.
+    """
+    students = get_students(ctx)
+    first_student = students[0]
+    env = make_env_name(first_student)
+    print(env)
+
+
 @shell.command("next")
 @click.pass_context
 def grade_next_student(ctx):
@@ -210,22 +236,35 @@ def grade_next_student(ctx):
     Jump to the next student's project directory and activate the student's
     environment.
     """
-    config = ctx.obj["config"]
-    grading_home = ctx.obj["grading_home"]
-    code_dir = grading_home / config["general"]["code_dir"]
-
-    cwd = Path.cwd()
-    current_dir = cwd.relative_to(code_dir)
-    current_student = current_dir.parts[0]
-
-    students = get_students(ctx)
-    idx = students.index(current_student)
-    next_student = students[(idx + 1) % len(students)]
-
+    next_student = get_next_student()
     project_path = find_pyproject_toml(ctx, next_student).parent
     env = make_env_name(next_student)
     print(f'cd "{project_path}";')
     print(f"conda activate {env};")
+
+
+@shell.command("nextpath")
+@click.pass_context
+def next_path(ctx):
+    """Get path for starting grading students.
+
+    Get the first student's project directory.
+    """
+    next_student = get_next_student(ctx)
+    project_path = find_pyproject_toml(ctx, next_student).parent
+    print(project_path)
+
+
+@shell.command("nextenv")
+@click.pass_context
+def next_env(ctx):
+    """Get env for starting grading students.
+
+    Get the first student's environment name.
+    """
+    next_student = get_next_student(ctx)
+    env = make_env_name(next_student)
+    print(env)
 
 
 def find_config_file():
@@ -314,6 +353,25 @@ def find_pyproject_toml(ctx, student):
         return next((code_dir / student).glob("**/pyproject.toml"))
     except StopIteration:
         return None
+
+
+def get_next_student(ctx):
+    config = ctx.obj["config"]
+    grading_home = ctx.obj["grading_home"]
+    code_dir = grading_home / config["general"]["code_dir"]
+
+    cwd = Path.cwd()
+    try:
+        current_dir = cwd.relative_to(code_dir)
+        current_student = current_dir.parts[0]
+    except (ValueError, IndexError):
+        print("[bold red]You must invoke this command from inside a student directory.")
+        raise click.Abort()
+
+    students = get_students(ctx)
+    idx = students.index(current_student)
+    next_student = students[(idx + 1) % len(students)]
+    return next_student
 
 
 if __name__ == "__main__":
