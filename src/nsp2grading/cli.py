@@ -21,7 +21,6 @@ RE_STUDENT_NAME = "(?P<name>[a-z]+)_"
 @click.pass_context
 def cli(ctx):
     """Grading tool for NSP2 data acquisition course."""
-    rprint()
     config_path = find_config_file()
     if ctx.invoked_subcommand != "init":
         if config_path is None:
@@ -221,7 +220,7 @@ def start_path(ctx):
     students = get_students(ctx)
     first_student = students[0]
     project_path = find_pyproject_toml(ctx, first_student).parent
-    print(f'"{project_path}"')
+    print(project_path)
 
 
 @shell.command("startenv")
@@ -261,7 +260,7 @@ def next_path(ctx):
     """
     next_student = get_next_student(ctx)
     project_path = find_pyproject_toml(ctx, next_student).parent
-    print(f'"{project_path}"')
+    print(project_path)
 
 
 @shell.command("nextenv")
