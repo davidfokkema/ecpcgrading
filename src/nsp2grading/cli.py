@@ -194,22 +194,6 @@ def init_zsh():
     print(importlib.resources.read_text("nsp2grading", "init.zsh"))
 
 
-@shell.command("start")
-@click.pass_context
-def start_grading(ctx):
-    """Start grading students.
-
-    Jump to the first student's project directory and activate the student's
-    environment.
-    """
-    students = get_students(ctx)
-    first_student = students[0]
-    project_path = find_pyproject_toml(ctx, first_student).parent
-    env = make_env_name(first_student)
-    print(f'cd "{project_path}";')
-    print(f"conda activate {env};")
-
-
 @shell.command("startpath")
 @click.pass_context
 def start_path(ctx):
@@ -223,55 +207,48 @@ def start_path(ctx):
     print(project_path)
 
 
-@shell.command("startenv")
-@click.pass_context
-def start_env(ctx):
-    """Get env for starting grading students.
-
-    Get the first student's environment name.
-    """
-    students = get_students(ctx)
-    first_student = students[0]
-    env = make_env_name(first_student)
-    print(env)
-
-
-@shell.command("next")
-@click.pass_context
-def grade_next_student(ctx):
-    """Start grading the next student.
-
-    Jump to the next student's project directory and activate the student's
-    environment.
-    """
-    next_student = get_next_student()
-    project_path = find_pyproject_toml(ctx, next_student).parent
-    env = make_env_name(next_student)
-    print(f'cd "{project_path}";')
-    print(f"conda activate {env};")
-
-
 @shell.command("nextpath")
 @click.pass_context
 def next_path(ctx):
-    """Get path for starting grading students.
+    """Get path for grading next student.
 
-    Get the first student's project directory.
+    Get the next student's project directory.
     """
     next_student = get_next_student(ctx)
     project_path = find_pyproject_toml(ctx, next_student).parent
     print(project_path)
 
 
-@shell.command("nextenv")
+@shell.command("prevpath")
 @click.pass_context
-def next_env(ctx):
-    """Get env for starting grading students.
+def prev_path(ctx):
+    """Get path for grading previous student.
 
-    Get the first student's environment name.
+    Get the previous student's project directory.
     """
-    next_student = get_next_student(ctx)
-    env = make_env_name(next_student)
+    previous_student = get_previous_student(ctx)
+    project_path = find_pyproject_toml(ctx, previous_student).parent
+    print(project_path)
+
+
+@shell.command("thispath")
+@click.pass_context
+def this_path(ctx):
+    """Get path for grading the current student.
+
+    Get the current student's project directory.
+    """
+    current_student = get_current_student(ctx)
+    project_path = find_pyproject_toml(ctx, current_student).parent
+    print(project_path)
+
+
+@shell.command("thisenv")
+@click.pass_context
+def this_environment(ctx):
+    """Get student environment name based on the current working directory."""
+    current_student = get_current_student(ctx)
+    env = make_env_name(current_student)
     print(env)
 
 
@@ -364,6 +341,49 @@ def find_pyproject_toml(ctx, student):
 
 
 def get_next_student(ctx):
+    """Get next student based on current working directory.
+
+    Args:
+        ctx (click.Context): The click context object.
+
+    Returns:
+        str: The name of the next student.
+    """
+    current_student = get_current_student(ctx)
+    students = get_students(ctx)
+    idx = students.index(current_student)
+    next_student = students[(idx + 1) % len(students)]
+    return next_student
+
+
+def get_previous_student(ctx):
+    """Get previous student based on current working directory.
+
+    Args:
+        ctx (click.Context): The click context object.
+
+    Returns:
+        str: The name of the previous student.
+    """
+    current_student = get_current_student(ctx)
+    students = get_students(ctx)
+    idx = students.index(current_student)
+    previous_student = students[(idx - 1)]
+    return previous_student
+
+
+def get_current_student(ctx):
+    """Get current student based on the current working directory.
+
+    Args:
+        ctx (click.Context): The click context object.
+
+    Raises:
+        click.Abort: Aborts when not called from inside a student directory.
+
+    Returns:
+        str: The name of the current student.
+    """
     config = ctx.obj["config"]
     grading_home = ctx.obj["grading_home"]
     code_dir = grading_home / config["general"]["code_dir"]
@@ -377,11 +397,7 @@ def get_next_student(ctx):
             "[bold red]You must invoke this command from inside a student directory."
         )
         raise click.Abort()
-
-    students = get_students(ctx)
-    idx = students.index(current_student)
-    next_student = students[(idx + 1) % len(students)]
-    return next_student
+    return current_student
 
 
 if __name__ == "__main__":
