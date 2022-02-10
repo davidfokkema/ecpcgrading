@@ -87,11 +87,16 @@ def list_environments(ctx):
 
 @env.command("create")
 @click.pass_context
+@click.option("--all/--no-all", default=False, help="Create envs for all students")
 @click.option("-f/", "--force/--no-force", default=False)
-def create_environments(ctx, force):
-    """Create conda environments for all students."""
+def create_environments(ctx, all, force):
+    """Create conda environments for current or all students."""
+    if all:
+        students = get_students(ctx)
+    else:
+        students = [get_current_student(ctx)]
+
     environments = get_all_environments()
-    students = get_students(ctx)
     for student in track(students, description="Creating environments..."):
         env_name = make_env_name(student)
         if env_name not in environments or force is True:
@@ -132,15 +137,20 @@ def remove_environments(ctx):
 
 @env.command("install")
 @click.pass_context
-def install_environments(ctx):
-    """Install and import packages for all existing student environments.
+@click.option("--all/--no-all", default=False, help="Create envs for all students")
+def install_environments(ctx, all):
+    """Install and import packages for existing student environments.
 
     Run `poetry install` to install all necessary packages and run `python -c
     "help('modules')"` to import all packages. This will trigger OS-specific
     malware scanners which will greatly speed up future imports.
     """
+    if all:
+        students = get_students(ctx)
+    else:
+        students = [get_current_student(ctx)]
+
     environments = get_all_environments()
-    students = get_students(ctx)
     for student in track(students, description="Installing environments..."):
         env_name = make_env_name(student)
         if env_name in environments:
