@@ -115,10 +115,15 @@ def create_environments(ctx, all, force):
 
 @env.command("remove")
 @click.pass_context
-def remove_environments(ctx):
-    """Remove all existing student environments."""
+@click.option("--all/--no-all", default=False, help="Create envs for all students")
+def remove_environments(ctx, all):
+    """Remove existing student environments."""
+    if all:
+        students = get_students(ctx)
+    else:
+        students = [get_current_student(ctx)]
+
     environments = get_all_environments()
-    students = get_students(ctx)
     for student in track(students, description="Removing environments..."):
         env_name = make_env_name(student)
         if env_name in environments:
