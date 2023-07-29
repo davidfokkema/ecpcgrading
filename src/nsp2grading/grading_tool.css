@@ -1,0 +1,18 @@
+Assignments {
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+Assignment {
+    height: 3;
+    text-align: center;
+    width: 1fr;
+    border: tall $background;
+    background: $primary-background;
+    color: $primary;
+}
+
+Assignment :hover {
+    background: $primary-background-lighten-2;
+    border: tall $accent;
+}
