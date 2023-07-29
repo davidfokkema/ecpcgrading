@@ -2,17 +2,19 @@ from faker import Faker
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
 from textual.screen import Screen
-from textual.widgets import Footer, Header, Label
+from textual.widgets import Footer, Header, Label, ListItem, ListView
 
 
-class Assignment(Label):
+class Assignment(ListItem):
     def __init__(self, title):
         super().__init__()
         self.title = title
-        self.update(self.title)
+
+    def compose(self) -> ComposeResult:
+        yield Label(self.title)
 
 
-class Assignments(VerticalScroll):
+class Assignments(ListView):
     def compose(self) -> ComposeResult:
         fake = Faker()
         fake.seed_instance(0)

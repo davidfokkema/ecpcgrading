@@ -3,16 +3,12 @@ Assignments {
     margin-bottom: 1;
 }
 
-Assignment {
+Assignment Label {
     height: 3;
-    text-align: center;
-    width: 1fr;
-    border: tall $background;
-    background: $primary-background;
-    color: $primary;
+    padding: 1;
 }
 
-Assignment :hover {
-    background: $primary-background-lighten-2;
-    border: tall $accent;
+Assignment {
+    align: center middle;
+    width: 1fr;
 }
