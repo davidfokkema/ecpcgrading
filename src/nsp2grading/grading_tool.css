@@ -1,14 +1,16 @@
 Assignments {
-    margin-top: 1;
     margin-bottom: 1;
 }
 
-Assignment Label {
-    height: 3;
+Assignment>Label {
     padding: 1;
+    width: 100%;
+    text-align: center;
 }
 
-Assignment {
-    align: center middle;
-    width: 1fr;
+.list_header {
+    width: 100%;
+    padding: 2;
+    text-align: center;
+    text-style: bold;
 }

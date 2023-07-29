@@ -26,6 +26,7 @@ class AssignmentsScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
+        yield Label("Please Select an Assignment", classes="list_header")
         yield Assignments()
 
 
