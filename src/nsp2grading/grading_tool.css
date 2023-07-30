@@ -2,15 +2,21 @@ Assignments {
     margin-bottom: 1;
 }
 
-Assignment>Label {
+Assignment>Label,
+Student>Label {
     padding: 1;
     width: 100%;
     text-align: center;
 }
 
-.list_header {
+#list_header {
     width: 100%;
-    padding: 2;
+    padding-bottom: 2;
     text-align: center;
     text-style: bold;
+}
+
+#back {
+    text-style: bold;
+    margin: 1 0 0 1;
 }
