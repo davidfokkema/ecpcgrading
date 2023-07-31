@@ -1,8 +1,8 @@
 from faker import Faker
+from textual import events
 from textual.app import App, ComposeResult
-from textual.containers import VerticalScroll
 from textual.screen import Screen
-from textual.widgets import Footer, Header, Label, ListItem, ListView
+from textual.widgets import Button, Footer, Header, Label, ListItem, ListView
 
 
 class Assignment(ListItem):
@@ -30,9 +30,12 @@ class AssignmentsScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Label(".", id="back")
+        yield Button(".", id="back")
         yield Label("Please Select an Assignment", id="list_header")
-        yield Assignments()
+        yield Assignments(id="assignments")
+
+    def on_mount(self):
+        self.query_one("Assignments").focus()
 
 
 class Student(ListItem):
@@ -56,9 +59,12 @@ class StudentsScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Label("< Assignments", id="back")
+        yield Button("< Assignments", id="back")
         yield Label("Please Select a Student", id="list_header")
         yield Students()
+
+    def on_mount(self):
+        self.query_one("Students").focus()
 
 
 class GradingTool(App):

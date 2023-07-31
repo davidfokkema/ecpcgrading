@@ -17,6 +17,12 @@ Student>Label {
 }
 
 #back {
-    text-style: bold;
-    margin: 1 0 0 1;
+    /* text-style: bold; */
+    /* margin: 1 0 0 1; */
+    border: none;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    padding: 0;
+    margin: 0;
 }
