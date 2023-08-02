@@ -1,5 +1,5 @@
 from faker import Faker
-from textual import events
+from textual import on
 from textual.app import App, ComposeResult
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Label, ListItem, ListView
@@ -30,7 +30,7 @@ class AssignmentsScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Button(".", id="back")
+        yield Button(".", id="back", disabled=True)
         yield Label("Please Select an Assignment", id="list_header")
         yield Assignments(id="assignments")
 
@@ -65,6 +65,10 @@ class StudentsScreen(Screen):
 
     def on_mount(self):
         self.query_one("Students").focus()
+
+    @on(Button.Pressed, "#back")
+    def go_back(self):
+        self.dismiss()
 
 
 class GradingTool(App):
