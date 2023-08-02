@@ -56,6 +56,8 @@ class Students(ListView):
 
 
 class StudentsScreen(Screen):
+    BINDINGS = [("b", "go_back", "Back to Assignments")]
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
@@ -67,7 +69,8 @@ class StudentsScreen(Screen):
         self.query_one("Students").focus()
 
     @on(Button.Pressed, "#back")
-    def go_back(self):
+    def action_go_back(self):
+        print("GO BACK")
         self.dismiss()
 
 
