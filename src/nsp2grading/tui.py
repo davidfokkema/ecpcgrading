@@ -86,16 +86,39 @@ class StudentsScreen(Screen):
 
 
 class Task(ListItem):
-    def __init__(self, label: str, title: str) -> None:
+    def __init__(self, title: str) -> None:
         super().__init__()
-        self.label = label
         self.title = title
 
     def compose(self) -> ComposeResult:
         yield Label(self.title)
 
     def execute(self) -> None:
-        print(f"YES, It's me: {self.title}")
+        ...
+
+
+class DownloadTask(Task):
+    def execute(self) -> None:
+        super().execute()
+        print("Downloading submission!")
+
+
+class UnpackTask(Task):
+    def execute(self) -> None:
+        super().execute()
+        print("Unpacking submission!")
+
+
+class CreateEnvTask(Task):
+    def execute(self) -> None:
+        super().execute()
+        print("CREATING CONDA ENV!")
+
+
+class OpenCodeTask(Task):
+    def execute(self) -> None:
+        super().execute()
+        print("Opening Visual Studio Code!")
 
 
 class Tasks(ListView):
@@ -105,10 +128,10 @@ class Tasks(ListView):
         self.student = student
 
     def compose(self) -> ComposeResult:
-        yield Task("download", "Download Submission")
-        yield Task("unpack", "Unpack submission into grading folder")
-        yield Task("create_env", "(Re)create an empty conda environment")
-        yield Task("vscode", "Open Visual Studio Code")
+        yield DownloadTask("Download Submission")
+        yield UnpackTask("Unpack submission into grading folder")
+        yield CreateEnvTask("(Re)create an empty conda environment")
+        yield OpenCodeTask("Open Visual Studio Code")
 
     @on(ListView.Selected)
     def execute_task(self, selected: ListView.Selected) -> None:
