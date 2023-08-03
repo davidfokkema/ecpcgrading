@@ -94,6 +94,9 @@ class Task(ListItem):
     def compose(self) -> ComposeResult:
         yield Label(self.title)
 
+    def execute(self) -> None:
+        print(f"YES, It's me: {self.title}")
+
 
 class Tasks(ListView):
     def __init__(self, assignment: Assignment, student: Student) -> None:
@@ -106,6 +109,10 @@ class Tasks(ListView):
         yield Task("unpack", "Unpack submission into grading folder")
         yield Task("create_env", "(Re)create an empty conda environment")
         yield Task("vscode", "Open Visual Studio Code")
+
+    @on(ListView.Selected)
+    def execute_task(self, selected: ListView.Selected) -> None:
+        selected.item.execute()
 
 
 class TasksScreen(Screen):
