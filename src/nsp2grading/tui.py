@@ -133,6 +133,7 @@ class TasksScreen(Screen):
 class GradingTool(App):
     TITLE = "Grading Tool for ECPC"
     CSS_PATH = "grading_tool.css"
+    BINDINGS = [("q", "quit", "Quit")]
 
     def on_mount(self) -> None:
         self.push_screen(AssignmentsScreen())
