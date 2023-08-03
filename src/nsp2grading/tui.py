@@ -103,6 +103,7 @@ class Tasks(ListView):
 
     def compose(self) -> ComposeResult:
         yield Task("download", "Download Submission")
+        yield Task("unpack", "Unpack submission into grading folder")
         yield Task("create_env", "(Re)create an empty conda environment")
         yield Task("vscode", "Open Visual Studio Code")
 
