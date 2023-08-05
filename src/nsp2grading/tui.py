@@ -16,9 +16,14 @@ class Assignment(ListItem):
 
 class Assignments(ListView):
     def compose(self) -> ComposeResult:
-        fake = Faker()
-        fake.seed_instance(0)
-        for assignment in [fake.sentence() for _ in range(5)]:
+        assignments = [
+            "Pythondaq met Poetry",
+            "Click: smallangle",
+            "Pythondaq met Click",
+            "GUI: functieplotter",
+            "Pythondaq met GUI",
+        ]
+        for assignment in assignments:
             yield Assignment(assignment)
 
     def on_list_view_selected(self, event: "Assignments.Selected") -> None:
@@ -53,8 +58,8 @@ class Students(ListView):
         self.assignment = assignment
 
     def compose(self) -> ComposeResult:
-        fake = Faker()
-        fake.seed_instance(0)
+        fake = Faker(locale="nl")
+        fake.seed_instance(1)
         for student in [fake.name() for _ in range(10)]:
             yield Student(student)
 
