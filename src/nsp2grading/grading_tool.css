@@ -13,6 +13,21 @@ Task>Label {
     text-style: bold;
 }
 
+#breadcrumbs {
+    align: right top;
+    height: auto;
+    margin-bottom: 1;
+}
+
+#breadcrumbs>Label {
+    margin: 0 1;
+    text-style: italic;
+}
+
+#breadcrumbs>#spacer {
+    width: 1fr;
+}
+
 #back {
     border: none;
     width: auto;

@@ -1,8 +1,9 @@
 from faker import Faker
 from textual import on
 from textual.app import App, ComposeResult
+from textual.containers import Horizontal
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Label, ListItem, ListView
+from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
 
 
 class Assignment(ListItem):
@@ -35,7 +36,11 @@ class AssignmentsScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Button(".", id="back", disabled=True)
+        yield Horizontal(
+            Button(".", id="back", disabled=True),
+            Static("", id="spacer"),
+            id="breadcrumbs",
+        )
         yield Label("Please Select an Assignment", id="list_header")
         yield Assignments(id="assignments")
 
@@ -46,10 +51,10 @@ class AssignmentsScreen(Screen):
 class Student(ListItem):
     def __init__(self, student: str) -> None:
         super().__init__()
-        self.student = student
+        self.student_name = student
 
     def compose(self) -> ComposeResult:
-        yield Label(self.student)
+        yield Label(self.student_name)
 
 
 class Students(ListView):
@@ -78,7 +83,12 @@ class StudentsScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Button("< Assignments", id="back")
+        yield Horizontal(
+            Button("< Assignments", id="back"),
+            Static("", id="spacer"),
+            Label(self.assignment.title),
+            id="breadcrumbs",
+        )
         yield Label("Please Select a Student", id="list_header")
         yield Students(self.assignment)
 
@@ -154,7 +164,13 @@ class TasksScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Button("< Students", id="back")
+        yield Horizontal(
+            Button("< Students", id="back"),
+            Static("", id="spacer"),
+            Label(self.assignment.title),
+            Label(f"({self.student.student_name})"),
+            id="breadcrumbs",
+        )
         yield Label("Please Select a Task", id="list_header")
         yield Tasks(self.assignment, self.student)
 
