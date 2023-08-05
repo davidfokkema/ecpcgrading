@@ -114,25 +114,21 @@ class Task(ListItem):
 
 class DownloadTask(Task):
     def execute(self) -> None:
-        super().execute()
         print("Downloading submission!")
 
 
 class UnpackTask(Task):
     def execute(self) -> None:
-        super().execute()
         print("Unpacking submission!")
 
 
 class CreateEnvTask(Task):
     def execute(self) -> None:
-        super().execute()
         print("CREATING CONDA ENV!")
 
 
 class OpenCodeTask(Task):
     def execute(self) -> None:
-        super().execute()
         print("Opening Visual Studio Code!")
 
 
