@@ -113,18 +113,6 @@ class StudentsScreen(Screen):
         self.dismiss()
 
 
-class Task(ListItem):
-    def __init__(self, title: str) -> None:
-        super().__init__()
-        self.title = title
-
-    def compose(self) -> ComposeResult:
-        yield Label(self.title)
-
-    def execute(self) -> None:
-        ...
-
-
 class RunTaskModal(ModalScreen):
     def __init__(
         self,
@@ -173,44 +161,57 @@ class TaskErrorModal(ModalScreen):
         self.dismiss()
 
 
-class DownloadTask(Task):
+class Task(ListItem):
+    run_msg: str = "Running task..."
+    error_msg: str = "Task failed"
+
+    def __init__(self, title: str) -> None:
+        super().__init__()
+        self.title = title
+
+    def compose(self) -> ComposeResult:
+        yield Label(self.title)
+
     def execute(self) -> None:
-        print("Downloading submission!")
-        self.app.push_screen(
-            RunTaskModal(self.run_download, "Downloading assignment...")
-        )
+        self.app.push_screen(RunTaskModal(self.run_task, self.run_msg))
+
+    @work(thread=True)
+    def run_task(self) -> None:
+        ...
+
+    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        if event.state == WorkerState.SUCCESS:
+            self.app.pop_screen()
+        elif event.state == WorkerState.ERROR:
+            self.app.pop_screen()
+
+            self.app.push_screen(
+                TaskErrorModal(self.error_msg, exception=event.worker.error)
+            )
+
+
+class DownloadTask(Task):
+    run_msg = "Downloading assignment..."
+    error_msg = "Download failed"
 
     @work(thread=True, exit_on_error=False)
-    def run_download(self):
+    def run_task(self):
         for _ in range(3):
             print("WORK")
             # 1 / 0
             time.sleep(1)
 
-    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
-        print("STATE CHANGED")
-        if event.state == WorkerState.SUCCESS:
-            self.app.pop_screen()
-        elif event.state == WorkerState.ERROR:
-            self.app.pop_screen()
-            self.app.push_screen(
-                TaskErrorModal("Download failed", exception=event.worker.error)
-            )
-
 
 class UnpackTask(Task):
-    def execute(self) -> None:
-        print("Unpacking submission!")
+    ...
 
 
 class CreateEnvTask(Task):
-    def execute(self) -> None:
-        print("CREATING CONDA ENV!")
+    ...
 
 
 class OpenCodeTask(Task):
-    def execute(self) -> None:
-        print("Opening Visual Studio Code!")
+    ...
 
 
 class Tasks(ListView):
