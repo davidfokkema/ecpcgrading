@@ -9,7 +9,7 @@ python = "^3.10"
 click = "^8.0.3"
 tomlkit = "^0.7.2"
 rich = "^13.4.2"
-textual = "^0.30.0"
+textual = "^0.32.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^5.2"

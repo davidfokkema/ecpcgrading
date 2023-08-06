@@ -1,9 +1,22 @@
+import time
+from collections.abc import Callable
+
 from faker import Faker
-from textual import on
+from textual import on, work
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal
-from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
+from textual.containers import Center, Horizontal, Vertical
+from textual.screen import ModalScreen, Screen
+from textual.widgets import (
+    Button,
+    Footer,
+    Header,
+    Label,
+    ListItem,
+    ListView,
+    LoadingIndicator,
+    Static,
+)
+from textual.worker import Worker, WorkerState
 
 
 class Assignment(ListItem):
@@ -112,9 +125,77 @@ class Task(ListItem):
         ...
 
 
+class RunTaskModal(ModalScreen):
+    def __init__(
+        self,
+        task: Callable[[], None],
+        msg: str,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+    ) -> None:
+        super().__init__(name, id, classes)
+        self.task_ = task
+        self.msg = msg
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="modal_dialog"):
+            with Center():
+                yield Label(self.msg)
+            yield LoadingIndicator()
+
+    async def on_mount(self) -> None:
+        self.task_()
+
+
+class TaskErrorModal(ModalScreen):
+    def __init__(
+        self,
+        msg: str,
+        exception: Exception,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+    ) -> None:
+        super().__init__(name, id, classes)
+        self.msg = msg
+        self.exception = exception
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="modal_dialog"):
+            with Center():
+                yield Label(f"{self.msg}: {self.exception}")
+            with Center():
+                yield Button("Close", variant="primary")
+
+    @on(Button.Pressed)
+    def close_dialog(self, event: Button.Pressed) -> None:
+        self.dismiss()
+
+
 class DownloadTask(Task):
     def execute(self) -> None:
         print("Downloading submission!")
+        self.app.push_screen(
+            RunTaskModal(self.run_download, "Downloading assignment...")
+        )
+
+    @work(thread=True, exit_on_error=False)
+    def run_download(self):
+        for _ in range(3):
+            print("WORK")
+            # 1 / 0
+            time.sleep(1)
+
+    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        print("STATE CHANGED")
+        if event.state == WorkerState.SUCCESS:
+            self.app.pop_screen()
+        elif event.state == WorkerState.ERROR:
+            self.app.pop_screen()
+            self.app.push_screen(
+                TaskErrorModal("Download failed", exception=event.worker.error)
+            )
 
 
 class UnpackTask(Task):

@@ -36,3 +36,24 @@ Task>Label {
     padding: 0;
     margin: 0;
 }
+
+RunTaskModal,
+TaskErrorModal {
+    align: center middle;
+}
+
+#modal_dialog {
+    height: auto;
+    width: 40%;
+    border: hkey $secondary;
+    background: $panel;
+}
+
+#modal_dialog Button {
+    margin-top: 1;
+}
+
+#modal_dialog LoadingIndicator {
+    margin-top: 1;
+    height: auto;
+}
