@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 from faker import Faker
 from textual import on, work
-from textual.app import App, ComposeResult
+from textual.app import App, ComposeResult, log
 from textual.containers import Center, Horizontal, Vertical
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
@@ -191,14 +191,14 @@ class Task(ListItem):
 
 
 class DownloadTask(Task):
-    run_msg = "Downloading assignment..."
+    run_msg = "Downloading submission..."
     error_msg = "Download failed"
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
+        log("Downloading submission")
         for _ in range(3):
-            print("WORK")
-            # 1 / 0
+            log("WORK")
             time.sleep(1)
 
 
