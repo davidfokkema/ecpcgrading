@@ -192,7 +192,7 @@ class DownloadTask(Task):
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        log("Downloading submission")
+        log(self.run_msg)
         for _ in range(3):
             log("WORK")
             time.sleep(1)
