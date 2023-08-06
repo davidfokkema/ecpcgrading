@@ -116,14 +116,12 @@ class StudentsScreen(Screen):
 class RunTaskModal(ModalScreen):
     def __init__(
         self,
-        task: Callable[[], None],
         msg: str,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
     ) -> None:
         super().__init__(name, id, classes)
-        self.task_ = task
         self.msg = msg
 
     def compose(self) -> ComposeResult:
@@ -131,9 +129,6 @@ class RunTaskModal(ModalScreen):
             with Center():
                 yield Label(self.msg)
             yield LoadingIndicator()
-
-    async def on_mount(self) -> None:
-        self.task_()
 
 
 class TaskErrorModal(ModalScreen):
@@ -173,7 +168,8 @@ class Task(ListItem):
         yield Label(self.title)
 
     def execute(self) -> None:
-        self.app.push_screen(RunTaskModal(self.run_task, self.run_msg))
+        self.app.push_screen(RunTaskModal(self.run_msg))
+        self.run_task()
 
     @work(thread=True)
     def run_task(self) -> None:
