@@ -157,6 +157,7 @@ class TaskErrorModal(ModalScreen):
 
 class Task(ListItem):
     run_msg: str = "Running task..."
+    success_msg: str = "Finished task"
     error_msg: str = "Task failed"
 
     def __init__(self, title: str) -> None:
@@ -175,11 +176,14 @@ class Task(ListItem):
         ...
 
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
-        if event.state == WorkerState.SUCCESS:
+        if event.state == WorkerState.RUNNING:
+            log(self.run_msg)
+        elif event.state == WorkerState.SUCCESS:
+            log(self.success_msg)
             self.app.pop_screen()
         elif event.state == WorkerState.ERROR:
+            log(self.error_msg)
             self.app.pop_screen()
-
             self.app.push_screen(
                 TaskErrorModal(self.error_msg, exception=event.worker.error)
             )
@@ -187,11 +191,11 @@ class Task(ListItem):
 
 class DownloadTask(Task):
     run_msg = "Downloading submission..."
+    success_msg = "Download successful"
     error_msg = "Download failed"
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        log(self.run_msg)
         for _ in range(3):
             log("WORK")
             time.sleep(1)
