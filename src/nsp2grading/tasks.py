@@ -1,9 +1,96 @@
+from __future__ import annotations
+
 import time
+from typing import TYPE_CHECKING
 
-from textual import work
-from textual.app import log
+from textual import on, work
+from textual.app import ComposeResult, log
+from textual.containers import Center, Vertical
+from textual.screen import ModalScreen
+from textual.widgets import Button, Label, ListItem, LoadingIndicator
+from textual.worker import Worker, WorkerState
 
-from nsp2grading.tui import Task
+if TYPE_CHECKING:
+    from nsp2grading.tui import Assignment, Student
+
+
+class Task(ListItem):
+    run_msg: str = "Running task..."
+    success_msg: str = "Finished task"
+    error_msg: str = "Task failed"
+
+    def __init__(self, title: str) -> None:
+        super().__init__()
+        self.title = title
+
+    def compose(self) -> ComposeResult:
+        yield Label(self.title)
+
+    def execute(self, assignment: Assignment, student: Student) -> None:
+        self._assignment = assignment
+        self._student = student
+        self.app.push_screen(RunTaskModal(self.run_msg))
+        self.run_task()
+
+    @work(thread=True)
+    def run_task(self) -> None:
+        ...
+
+    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        if event.state == WorkerState.RUNNING:
+            log(self.run_msg)
+        elif event.state == WorkerState.SUCCESS:
+            log(self.success_msg)
+            self.app.pop_screen()
+        elif event.state == WorkerState.ERROR:
+            log(self.error_msg)
+            self.app.pop_screen()
+            self.app.push_screen(
+                TaskErrorModal(self.error_msg, exception=event.worker.error)
+            )
+
+
+class RunTaskModal(ModalScreen):
+    def __init__(
+        self,
+        msg: str,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+    ) -> None:
+        super().__init__(name, id, classes)
+        self.msg = msg
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="modal_dialog"):
+            with Center():
+                yield Label(self.msg)
+            yield LoadingIndicator()
+
+
+class TaskErrorModal(ModalScreen):
+    def __init__(
+        self,
+        msg: str,
+        exception: Exception,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+    ) -> None:
+        super().__init__(name, id, classes)
+        self.msg = msg
+        self.exception = exception
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="modal_dialog"):
+            with Center():
+                yield Label(f"{self.msg}: {self.exception}")
+            with Center():
+                yield Button("Close", variant="primary")
+
+    @on(Button.Pressed)
+    def close_dialog(self, event: Button.Pressed) -> None:
+        self.dismiss()
 
 
 class DownloadTask(Task):
@@ -13,9 +100,8 @@ class DownloadTask(Task):
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        for _ in range(3):
-            log("WORK")
-            time.sleep(1)
+        print(type(__file__))
+        time.sleep(1)
 
 
 class UnpackTask(Task):

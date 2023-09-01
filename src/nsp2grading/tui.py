@@ -1,19 +1,9 @@
 from faker import Faker
-from textual import on, work
-from textual.app import App, ComposeResult, log
-from textual.containers import Center, Horizontal, Vertical
-from textual.screen import ModalScreen, Screen
-from textual.widgets import (
-    Button,
-    Footer,
-    Header,
-    Label,
-    ListItem,
-    ListView,
-    LoadingIndicator,
-    Static,
-)
-from textual.worker import Worker, WorkerState
+from textual import on
+from textual.app import App, ComposeResult
+from textual.containers import Horizontal
+from textual.screen import Screen
+from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
 
 from nsp2grading import tasks
 
@@ -112,83 +102,6 @@ class StudentsScreen(Screen):
         self.dismiss()
 
 
-class RunTaskModal(ModalScreen):
-    def __init__(
-        self,
-        msg: str,
-        name: str | None = None,
-        id: str | None = None,
-        classes: str | None = None,
-    ) -> None:
-        super().__init__(name, id, classes)
-        self.msg = msg
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="modal_dialog"):
-            with Center():
-                yield Label(self.msg)
-            yield LoadingIndicator()
-
-
-class TaskErrorModal(ModalScreen):
-    def __init__(
-        self,
-        msg: str,
-        exception: Exception,
-        name: str | None = None,
-        id: str | None = None,
-        classes: str | None = None,
-    ) -> None:
-        super().__init__(name, id, classes)
-        self.msg = msg
-        self.exception = exception
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="modal_dialog"):
-            with Center():
-                yield Label(f"{self.msg}: {self.exception}")
-            with Center():
-                yield Button("Close", variant="primary")
-
-    @on(Button.Pressed)
-    def close_dialog(self, event: Button.Pressed) -> None:
-        self.dismiss()
-
-
-class Task(ListItem):
-    run_msg: str = "Running task..."
-    success_msg: str = "Finished task"
-    error_msg: str = "Task failed"
-
-    def __init__(self, title: str) -> None:
-        super().__init__()
-        self.title = title
-
-    def compose(self) -> ComposeResult:
-        yield Label(self.title)
-
-    def execute(self) -> None:
-        self.app.push_screen(RunTaskModal(self.run_msg))
-        self.run_task()
-
-    @work(thread=True)
-    def run_task(self) -> None:
-        ...
-
-    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
-        if event.state == WorkerState.RUNNING:
-            log(self.run_msg)
-        elif event.state == WorkerState.SUCCESS:
-            log(self.success_msg)
-            self.app.pop_screen()
-        elif event.state == WorkerState.ERROR:
-            log(self.error_msg)
-            self.app.pop_screen()
-            self.app.push_screen(
-                TaskErrorModal(self.error_msg, exception=event.worker.error)
-            )
-
-
 class Tasks(ListView):
     def __init__(self, assignment: Assignment, student: Student) -> None:
         super().__init__()
@@ -203,7 +116,7 @@ class Tasks(ListView):
 
     @on(ListView.Selected)
     def execute_task(self, selected: ListView.Selected) -> None:
-        selected.item.execute()
+        selected.item.execute(self.assignment, self.student)
 
 
 class TasksScreen(Screen):
