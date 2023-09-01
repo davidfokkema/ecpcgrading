@@ -5,6 +5,7 @@ from textual.containers import Horizontal
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
 
+import nsp2grading.config
 from nsp2grading import tasks
 
 
@@ -152,6 +153,12 @@ class GradingTool(App):
     TITLE = "Grading Tool for ECPC"
     CSS_PATH = "grading_tool.css"
     BINDINGS = [("q", "quit", "Quit")]
+
+    config: nsp2grading.config.Config
+
+    def __init__(self):
+        super().__init__()
+        self.config = nsp2grading.config.Config()
 
     def on_mount(self) -> None:
         self.push_screen(AssignmentsScreen())

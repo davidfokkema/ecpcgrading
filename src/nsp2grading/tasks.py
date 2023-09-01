@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import shutil
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING
 
+from slugify import slugify
 from textual import on, work
 from textual.app import ComposeResult, log
 from textual.containers import Center, Vertical
@@ -11,13 +14,15 @@ from textual.widgets import Button, Label, ListItem, LoadingIndicator
 from textual.worker import Worker, WorkerState
 
 if TYPE_CHECKING:
-    from nsp2grading.tui import Assignment, Student
+    from nsp2grading.tui import Assignment, GradingTool, Student
 
 
 class Task(ListItem):
     run_msg: str = "Running task..."
     success_msg: str = "Finished task"
     error_msg: str = "Task failed"
+
+    app: GradingTool
 
     def __init__(self, title: str) -> None:
         super().__init__()
@@ -100,7 +105,15 @@ class DownloadTask(Task):
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        print(type(__file__))
+        # FIXME: this is placeholder code to grab a file from the filesystem instead of a canvas download
+        config = self.app.config
+        assignment = slugify(self._assignment.title)
+        submissions_dir = config.root_path / config.submissions_path / assignment
+        submission_path = submissions_dir / (
+            slugify(self._student.student_name) + "_pythondaq.zip"
+        )
+        Path.mkdir(submissions_dir, parents=True, exist_ok=True)
+        shutil.copy(Path.home() / "tmp" / "test_coursedaq.zip", submission_path)
         time.sleep(1)
 
 
