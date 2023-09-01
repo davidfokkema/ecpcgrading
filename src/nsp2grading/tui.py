@@ -1,5 +1,4 @@
 import time
-from collections.abc import Callable
 
 from faker import Faker
 from textual import on, work
