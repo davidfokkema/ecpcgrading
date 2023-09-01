@@ -1,5 +1,3 @@
-import time
-
 from faker import Faker
 from textual import on, work
 from textual.app import App, ComposeResult, log
@@ -16,6 +14,8 @@ from textual.widgets import (
     Static,
 )
 from textual.worker import Worker, WorkerState
+
+from nsp2grading import tasks
 
 
 class Assignment(ListItem):
@@ -189,30 +189,6 @@ class Task(ListItem):
             )
 
 
-class DownloadTask(Task):
-    run_msg = "Downloading submission..."
-    success_msg = "Download successful"
-    error_msg = "Download failed"
-
-    @work(thread=True, exit_on_error=False)
-    def run_task(self):
-        for _ in range(3):
-            log("WORK")
-            time.sleep(1)
-
-
-class UnpackTask(Task):
-    ...
-
-
-class CreateEnvTask(Task):
-    ...
-
-
-class OpenCodeTask(Task):
-    ...
-
-
 class Tasks(ListView):
     def __init__(self, assignment: Assignment, student: Student) -> None:
         super().__init__()
@@ -220,10 +196,10 @@ class Tasks(ListView):
         self.student = student
 
     def compose(self) -> ComposeResult:
-        yield DownloadTask("Download Submission")
-        yield UnpackTask("Unpack submission into grading folder")
-        yield CreateEnvTask("(Re)create an empty conda environment")
-        yield OpenCodeTask("Open Visual Studio Code")
+        yield tasks.DownloadTask("Download Submission")
+        yield tasks.UnpackTask("Unpack submission into grading folder")
+        yield tasks.CreateEnvTask("(Re)create an empty conda environment")
+        yield tasks.OpenCodeTask("Open Visual Studio Code")
 
     @on(ListView.Selected)
     def execute_task(self, selected: ListView.Selected) -> None:
