@@ -42,11 +42,16 @@ TaskErrorModal {
     align: center middle;
 }
 
+
 #modal_dialog {
     height: auto;
     width: 40%;
     border: hkey $secondary;
     background: $panel;
+}
+
+#modal_dialog #error_msg {
+    width: 100%;
 }
 
 #modal_dialog Button {

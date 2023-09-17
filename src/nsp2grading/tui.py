@@ -151,7 +151,7 @@ class TasksScreen(Screen):
 
 class GradingTool(App):
     TITLE = "Grading Tool for ECPC"
-    CSS_PATH = "grading_tool.css"
+    CSS_PATH = "grading_tool.tcss"
     BINDINGS = [("q", "quit", "Quit")]
 
     config: nsp2grading.config.Config
