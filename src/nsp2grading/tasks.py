@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -146,7 +147,22 @@ class UncompressCodeTask(Task):
 
 
 class CreateEnvTask(Task):
-    ...
+    run_msg = "Creating Conda environment..."
+    success_msg = "Conda environment successfully created"
+    error_msg = "Environment creation failed"
+
+    @work(thread=True, exit_on_error=False)
+    def run_task(self):
+        env_name = "ECPC_" + slugify(self._student.student_name)
+        process = subprocess.run(
+            f"conda create -n {env_name} python=3.9 --yes",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        self.log(process.stdout.decode())
+        if process.returncode:
+            raise RuntimeError(f"Process exited with exit code: {process.returncode}")
 
 
 class OpenCodeTask(Task):
