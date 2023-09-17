@@ -4,6 +4,7 @@ import shutil
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
+from zipfile import ZipFile
 
 from slugify import slugify
 from textual import on, work
@@ -89,7 +90,7 @@ class TaskErrorModal(ModalScreen):
     def compose(self) -> ComposeResult:
         with Vertical(id="modal_dialog"):
             with Center():
-                yield Label(f"{self.msg}: {self.exception}")
+                yield Label(f"{self.msg}: {self.exception}", id="error_msg")
             with Center():
                 yield Button("Close", variant="primary")
 
@@ -108,7 +109,7 @@ class DownloadTask(Task):
         # FIXME: this is placeholder code to grab a file from the filesystem instead of a canvas download
         config = self.app.config
         assignment = slugify(self._assignment.title)
-        submissions_dir = config.root_path / config.submissions_path / assignment
+        submissions_dir = config.root_path / assignment / config.submissions_path
         submission_path = submissions_dir / (
             slugify(self._student.student_name) + "_pythondaq.zip"
         )
@@ -117,8 +118,31 @@ class DownloadTask(Task):
         time.sleep(1)
 
 
-class UnpackTask(Task):
-    ...
+class UncompressCodeTask(Task):
+    run_msg = "Extracting files..."
+    success_msg = "Code successfully decompressed"
+    error_msg = "Decompression failed"
+
+    @work(thread=True, exit_on_error=False)
+    def run_task(self):
+        config = self.app.config
+        assignment = slugify(self._assignment.title)
+        submissions_dir = config.root_path / assignment / config.submissions_path
+        student_name = slugify(self._student.student_name)
+        code_dir = config.root_path / assignment / config.code_path / student_name
+
+        match list(submissions_dir.glob(student_name + "_*.zip")):
+            case [path]:
+                if code_dir.exists():
+                    self.log(f"Removing existing directory {code_dir}")
+                    shutil.rmtree(code_dir)
+                Path.mkdir(code_dir, parents=True)
+                with ZipFile(path) as f:
+                    f.extractall(path=code_dir)
+            case [_, *_]:
+                raise RuntimeError("More than one submission file")
+            case _:
+                raise RuntimeError("Can't locate submission file")
 
 
 class CreateEnvTask(Task):

@@ -111,7 +111,7 @@ class Tasks(ListView):
 
     def compose(self) -> ComposeResult:
         yield tasks.DownloadTask("Download Submission")
-        yield tasks.UnpackTask("Unpack submission into grading folder")
+        yield tasks.UncompressCodeTask("Extract submission into grading folder")
         yield tasks.CreateEnvTask("(Re)create an empty conda environment")
         yield tasks.OpenCodeTask("Open Visual Studio Code")
 
