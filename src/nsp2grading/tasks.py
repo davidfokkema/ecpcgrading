@@ -166,4 +166,27 @@ class CreateEnvTask(Task):
 
 
 class OpenCodeTask(Task):
-    ...
+    run_msg = "Starting Visual Studio Code..."
+    success_msg = "Visual Studio Code is running"
+    error_msg = "Could not start Visual Studio Code"
+
+    @work(thread=True, exit_on_error=False)
+    def run_task(self):
+        config = self.app.config
+        assignment = slugify(self._assignment.title)
+        student_name = slugify(self._student.student_name)
+        code_dir = config.root_path / assignment / config.code_path / student_name
+
+        dir_contents: Path = list(code_dir.iterdir())
+        if len(dir_contents) == 1 and dir_contents[0].is_dir():
+            code_dir = dir_contents[0]
+
+        process = subprocess.run(
+            f"code {code_dir}",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        self.log(process.stdout.decode())
+        if process.returncode:
+            raise RuntimeError(f"Process exited with exit code: {process.returncode}")
