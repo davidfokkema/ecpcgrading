@@ -175,6 +175,7 @@ class OpenCodeTask(Task):
         config = self.app.config
         assignment = slugify(self._assignment.title)
         student_name = slugify(self._student.student_name)
+        env_name = "ECPC_" + slugify(self._student.student_name)
         code_dir = config.root_path / assignment / config.code_path / student_name
 
         dir_contents: Path = list(code_dir.iterdir())
@@ -182,7 +183,7 @@ class OpenCodeTask(Task):
             code_dir = dir_contents[0]
 
         process = subprocess.run(
-            f"code {code_dir}",
+            f"conda run -n {env_name} code {code_dir}",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
