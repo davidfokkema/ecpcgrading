@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from faker import Faker
 from textual import on
 from textual.app import App, ComposeResult
@@ -158,7 +160,7 @@ class GradingTool(App):
 
     def __init__(self):
         super().__init__()
-        self.config = nsp2grading.config.Config()
+        self.config = nsp2grading.config.read_config(Path.cwd())
 
     def on_mount(self) -> None:
         self.push_screen(AssignmentsScreen())
