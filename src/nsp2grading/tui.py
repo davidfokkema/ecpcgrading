@@ -10,7 +10,7 @@ from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, S
 from textual.worker import Worker, WorkerState
 
 import nsp2grading.config
-from nsp2grading import tasks
+from nsp2grading import canvas, tasks
 
 
 class Assignment(ListItem):
@@ -29,7 +29,7 @@ class Assignments(ListView):
 
     def compose(self) -> ComposeResult:
         for assignment in self.assignments:
-            yield Assignment(assignment)
+            yield Assignment(assignment.name)
 
     def on_list_view_selected(self, event: "Assignments.Selected") -> None:
         assignment: Assignment = event.item
@@ -61,15 +61,8 @@ class AssignmentsScreen(Screen):
 
     @work(thread=True)
     def get_assignments(self) -> list[str]:
-        assignments = [
-            "Pythondaq met Poetry",
-            "Click: smallangle",
-            "Pythondaq met Click",
-            "GUI: functieplotter",
-            "Pythondaq met GUI",
-        ]
-        time.sleep(3)
-        return assignments
+        config: nsp2grading.config.Config = self.app.config
+        return canvas.get_assignments(config.server, config.course_id)
 
 
 class Student(ListItem):

@@ -9,6 +9,8 @@ class Config(BaseModel):
     submissions_path: Path = Path("submissions")
     code_path: Path = Path("code")
     env_prefix: str = "ECPC_"
+    server: str
+    course_id: int
 
 
 def read_config(folder: Path):
