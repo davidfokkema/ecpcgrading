@@ -1,11 +1,13 @@
+import time
 from pathlib import Path
 
 from faker import Faker
-from textual import on
+from textual import on, work
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
+from textual.worker import Worker, WorkerState
 
 import nsp2grading.config
 from nsp2grading import tasks
@@ -21,15 +23,12 @@ class Assignment(ListItem):
 
 
 class Assignments(ListView):
+    def __init__(self, assignments: list[str], id: str | None = None) -> None:
+        super().__init__()
+        self.assignments = assignments
+
     def compose(self) -> ComposeResult:
-        assignments = [
-            "Pythondaq met Poetry",
-            "Click: smallangle",
-            "Pythondaq met Click",
-            "GUI: functieplotter",
-            "Pythondaq met GUI",
-        ]
-        for assignment in assignments:
+        for assignment in self.assignments:
             yield Assignment(assignment)
 
     def on_list_view_selected(self, event: "Assignments.Selected") -> None:
@@ -38,6 +37,10 @@ class Assignments(ListView):
 
 
 class AssignmentsScreen(Screen):
+    def on_compose(self) -> None:
+        self.app.push_screen(tasks.RunTaskModal("Fetching assignments..."))
+        self.get_assignments()
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
@@ -47,10 +50,26 @@ class AssignmentsScreen(Screen):
             id="breadcrumbs",
         )
         yield Label("Please Select an Assignment", id="list_header")
-        yield Assignments(id="assignments")
 
-    def on_mount(self) -> None:
-        self.query_one("Assignments").focus()
+    @on(Worker.StateChanged)
+    def show_assignments(self, event: Worker.StateChanged) -> None:
+        if event.state == WorkerState.SUCCESS:
+            assignments = event.worker.result
+            self.mount(Assignments(assignments, id="assignments"))
+            self.query_one("Assignments").focus()
+            self.app.pop_screen()
+
+    @work(thread=True)
+    def get_assignments(self) -> list[str]:
+        assignments = [
+            "Pythondaq met Poetry",
+            "Click: smallangle",
+            "Pythondaq met Click",
+            "GUI: functieplotter",
+            "Pythondaq met GUI",
+        ]
+        time.sleep(3)
+        return assignments
 
 
 class Student(ListItem):
