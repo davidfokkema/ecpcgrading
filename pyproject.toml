@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "nsp2grading"
+name = "ecpcgrading"
 version = "0.1.0"
 description = ""
 authors = ["David Fokkema <davidfokkema@icloud.com>"]

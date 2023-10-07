@@ -1,6 +1,0 @@
-[general]
-submissions_dir = "submissions"
-code_dir = "code"
-env_prefix = "env_"
-
-[students]
