@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from canvas_course_tools.datatypes import Assignment as CanvasAssignment
 from faker import Faker
 from textual import on, work
 from textual.app import App, ComposeResult
@@ -36,9 +37,15 @@ class Assignments(ListView):
 
 
 class AssignmentsScreen(Screen):
-    def on_compose(self) -> None:
-        self.app.push_screen(tasks.RunTaskModal("Fetching assignments..."))
-        self.get_assignments()
+    def __init__(
+        self,
+        assignments: list[CanvasAssignment],
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+    ) -> None:
+        super().__init__(name, id, classes)
+        self.assignments = assignments
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -49,19 +56,10 @@ class AssignmentsScreen(Screen):
             id="breadcrumbs",
         )
         yield Label("Please Select an Assignment", id="list_header")
+        yield Assignments(self.assignments, id="assignments")
 
-    @on(Worker.StateChanged)
-    def show_assignments(self, event: Worker.StateChanged) -> None:
-        if event.state == WorkerState.SUCCESS:
-            assignments = event.worker.result
-            self.mount(Assignments(assignments, id="assignments"))
-            self.query_one("Assignments").focus()
-            self.app.pop_screen()
-
-    @work(thread=True)
-    def get_assignments(self) -> list[str]:
-        config: ecpcgrading.config.Config = self.app.config
-        return canvas.get_assignments(config.server, config.course_id)
+    def on_mount(self) -> None:
+        self.query_one("Assignments").focus()
 
 
 class Student(ListItem):
@@ -174,7 +172,20 @@ class GradingTool(App):
         self.config = ecpcgrading.config.read_config(Path.cwd())
 
     def on_mount(self) -> None:
-        self.push_screen(AssignmentsScreen())
+        self.app.push_screen(tasks.RunTaskModal("Fetching assignments..."))
+        self.get_assignments()
+
+    @on(Worker.StateChanged)
+    def show_assignments(self, event: Worker.StateChanged) -> None:
+        if event.state == WorkerState.SUCCESS:
+            assignments = event.worker.result
+            self.pop_screen()
+            self.push_screen(AssignmentsScreen(assignments))
+
+    @work(thread=True)
+    def get_assignments(self) -> list[str]:
+        config: ecpcgrading.config.Config = self.app.config
+        return canvas.get_assignments(config.server, config.course_id)
 
 
 if __name__ == "__main__":
