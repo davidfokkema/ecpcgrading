@@ -8,8 +8,8 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
 from textual.worker import Worker, WorkerState
 
-import nsp2grading.config
-from nsp2grading import canvas, tasks
+import ecpcgrading.config
+from ecpcgrading import canvas, tasks
 
 
 class Assignment(ListItem):
@@ -60,7 +60,7 @@ class AssignmentsScreen(Screen):
 
     @work(thread=True)
     def get_assignments(self) -> list[str]:
-        config: nsp2grading.config.Config = self.app.config
+        config: ecpcgrading.config.Config = self.app.config
         return canvas.get_assignments(config.server, config.course_id)
 
 
@@ -167,11 +167,11 @@ class GradingTool(App):
     CSS_PATH = "grading_tool.tcss"
     BINDINGS = [("q", "quit", "Quit")]
 
-    config: nsp2grading.config.Config
+    config: ecpcgrading.config.Config
 
     def __init__(self):
         super().__init__()
-        self.config = nsp2grading.config.read_config(Path.cwd())
+        self.config = ecpcgrading.config.read_config(Path.cwd())
 
     def on_mount(self) -> None:
         self.push_screen(AssignmentsScreen())

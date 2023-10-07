@@ -16,7 +16,7 @@ from textual.widgets import Button, Label, ListItem, LoadingIndicator
 from textual.worker import Worker, WorkerState
 
 if TYPE_CHECKING:
-    from nsp2grading.tui import Assignment, GradingTool, Student
+    from ecpcgrading.tui import Assignment, GradingTool, Student
 
 
 class Task(ListItem):
