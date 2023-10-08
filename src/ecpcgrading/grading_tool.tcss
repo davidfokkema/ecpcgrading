@@ -37,8 +37,7 @@ Task>Label {
     margin: 0;
 }
 
-RunTaskModal,
-TaskErrorModal {
+StartupScreen, RunTaskModal, TaskErrorModal {
     align: center middle;
 }
 
