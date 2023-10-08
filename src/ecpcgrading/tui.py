@@ -184,7 +184,9 @@ class StartupScreen(ModalScreen):
     @work(thread=True)
     def get_assignments_and_students(self) -> list[str]:
         config: ecpcgrading.config.Config = self.app.config
-        assignments = canvas.get_assignments(config.server, config.course_id)
+        assignments = canvas.get_assignments(
+            config.server, config.course_id, config.assignment_group
+        )
         # students = canvas.get_students(config.server, config.course_id)
         return assignments
 
