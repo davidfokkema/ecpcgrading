@@ -11,7 +11,9 @@ class Config(BaseModel):
     env_prefix: str = "ECPC_"
     server: str
     course_id: int
-    assignment_group: str = "ECPC"
+    assignment_group: str
+    groupset: str
+    group: str
 
 
 def read_config(folder: Path):

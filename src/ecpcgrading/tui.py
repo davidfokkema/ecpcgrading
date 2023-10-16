@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from canvas_course_tools.datatypes import Assignment as CanvasAssignment
+from canvas_course_tools.datatypes import Student as CanvasStudent
 from faker import Faker
 from textual import on, work
 from textual.app import App, ComposeResult
@@ -33,12 +34,8 @@ class Assignment(ListItem):
 
 
 class Assignments(ListView):
-    def __init__(self, assignments: list[str], id: str | None = None) -> None:
-        super().__init__()
-        self.assignments = assignments
-
     def compose(self) -> ComposeResult:
-        for assignment in self.assignments:
+        for assignment in self.app.assignments:
             yield Assignment(assignment.name)
 
     def on_list_view_selected(self, event: "Assignments.Selected") -> None:
@@ -47,16 +44,6 @@ class Assignments(ListView):
 
 
 class AssignmentsScreen(Screen):
-    def __init__(
-        self,
-        assignments: list[CanvasAssignment],
-        name: str | None = None,
-        id: str | None = None,
-        classes: str | None = None,
-    ) -> None:
-        super().__init__(name, id, classes)
-        self.assignments = assignments
-
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
@@ -66,16 +53,16 @@ class AssignmentsScreen(Screen):
             id="breadcrumbs",
         )
         yield Label("Please Select an Assignment", id="list_header")
-        yield Assignments(self.assignments, id="assignments")
+        yield Assignments(id="assignments")
 
     def on_mount(self) -> None:
         self.query_one("Assignments").focus()
 
 
 class Student(ListItem):
-    def __init__(self, student: str) -> None:
+    def __init__(self, student_name: str) -> None:
         super().__init__()
-        self.student_name = student
+        self.student_name = student_name
 
     def compose(self) -> ComposeResult:
         yield Label(self.student_name)
@@ -87,10 +74,8 @@ class Students(ListView):
         self.assignment = assignment
 
     def compose(self) -> ComposeResult:
-        fake = Faker(locale="nl")
-        fake.seed_instance(1)
-        for student in [fake.name() for _ in range(10)]:
-            yield Student(student)
+        for student in self.app.students:
+            yield Student(student.name)
 
     def on_list_view_selected(self, event: "Students.Selected") -> None:
         student: Student = event.item
@@ -187,14 +172,16 @@ class StartupScreen(ModalScreen):
         assignments = canvas.get_assignments(
             config.server, config.course_id, config.assignment_group
         )
-        # students = canvas.get_students(config.server, config.course_id)
-        return assignments
+        students = canvas.get_students(
+            config.server, config.course_id, config.groupset, config.group
+        )
+        return assignments, students
 
     @on(Worker.StateChanged)
     def return_assignments(self, event: Worker.StateChanged) -> None:
         if event.state == WorkerState.SUCCESS:
-            assignments = event.worker.result
-            self.dismiss(assignments)
+            assignments, students = event.worker.result
+            self.dismiss((assignments, students))
 
 
 class GradingTool(App):
@@ -203,6 +190,8 @@ class GradingTool(App):
     BINDINGS = [("q", "quit", "Quit")]
 
     config: ecpcgrading.config.Config
+    assignments: list[CanvasAssignment]
+    students: list[CanvasStudent]
 
     def __init__(self):
         super().__init__()
@@ -210,8 +199,8 @@ class GradingTool(App):
 
     def on_mount(self) -> None:
         def callback(result):
-            self.assignments = result
-            self.push_screen(AssignmentsScreen(self.assignments))
+            self.assignments, self.students = result
+            self.push_screen(AssignmentsScreen())
 
         self.app.push_screen(StartupScreen(), callback=callback)
 
