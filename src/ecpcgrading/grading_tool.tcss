@@ -49,6 +49,11 @@ StartupScreen, RunTaskModal, TaskErrorModal {
     background: $panel;
 }
 
+#modal_dialog Label {
+    width: 100%;
+    text-align: center;
+}
+
 #modal_dialog #error_msg {
     width: 100%;
 }
