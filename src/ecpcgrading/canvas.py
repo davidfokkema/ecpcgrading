@@ -1,5 +1,6 @@
 from canvas_course_tools import utils
 from canvas_course_tools.datatypes import Assignment, Student
+from unidecode import unidecode
 
 
 def get_assignments(server: str, course_id: int, group_name: str) -> list[Assignment]:
@@ -39,7 +40,9 @@ def get_students(
             groupset = get_groupset_by_name(groupset_name, canvas, course)
             for group in canvas.list_groups(groupset):
                 students.extend(canvas.get_students_in_group(group))
-            return sorted(students, key=lambda x: getattr(x, "sortable_name"))
+            return sorted(
+                students, key=lambda x: unidecode(getattr(x, "sortable_name"))
+            )
         case (None, str()):
             raise RuntimeError(f"Group {group_name} specified without 'groupset'")
         case _:
