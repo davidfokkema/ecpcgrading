@@ -12,8 +12,8 @@ class Config(BaseModel):
     server: str
     course_id: int
     assignment_group: str
-    groupset: str
-    group: str
+    groupset: str | None = None
+    group: str | None = None
 
 
 def read_config(folder: Path):

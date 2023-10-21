@@ -24,10 +24,14 @@ def get_assignments(server: str, course_id: int, group_name: str) -> list[Assign
 
 
 def get_students(
-    server: str, course_id: int, groupset_name: str, group_name: str
+    server: str, course_id: int, groupset_name: str | None, group_name: str | None
 ) -> list[Student]:
     canvas = utils.get_canvas(server)
     course = canvas.get_course(course_id)
+
+    if groupset_name is None:
+        return canvas.get_students(course_id=course_id)
+    
     groupsets = canvas.list_groupsets(course)
     groupset = next(g for g in groupsets if g.name == groupset_name)
     groups = canvas.list_groups(groupset)
