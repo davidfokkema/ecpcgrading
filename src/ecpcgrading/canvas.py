@@ -29,11 +29,36 @@ def get_students(
     canvas = utils.get_canvas(server)
     course = canvas.get_course(course_id)
 
-    if groupset_name is None:
-        return canvas.get_students(course_id=course_id)
-    
+    match groupset_name, group_name:
+        case (str(), str()):
+            groupset = get_groupset_by_name(groupset_name, canvas, course)
+            group = get_group_from_groupset_by_name(group_name, canvas, groupset)
+            return canvas.get_students_in_group(group)
+        case (str(), None):
+            students = []
+            groupset = get_groupset_by_name(groupset_name, canvas, course)
+            for group in canvas.list_groups(groupset):
+                students.extend(canvas.get_students_in_group(group))
+            return sorted(students, key=lambda x: getattr(x, "sortable_name"))
+        case (None, str()):
+            raise RuntimeError(f"Group {group_name} specified without 'groupset'")
+        case _:
+            return canvas.get_students(course_id=course.id)
+
+
+def get_groupset_by_name(groupset_name, canvas, course):
     groupsets = canvas.list_groupsets(course)
-    groupset = next(g for g in groupsets if g.name == groupset_name)
+    try:
+        groupset = next(g for g in groupsets if g.name == groupset_name)
+    except StopIteration:
+        raise RuntimeError(f"Group set {groupset_name} not found")
+    return groupset
+
+
+def get_group_from_groupset_by_name(group_name, canvas, groupset):
     groups = canvas.list_groups(groupset)
-    group = next(g for g in groups if g.name == group_name)
-    return canvas.get_students_in_group(group)
+    try:
+        group = next(g for g in groups if g.name == group_name)
+    except StopIteration:
+        raise RuntimeError(f"Group {group_name} not found in group set {groupset.name}")
+    return group
