@@ -159,9 +159,9 @@ class UncompressCodeTask(Task):
     @work(thread=True, exit_on_error=False)
     def run_task(self):
         config = self.app.config
-        assignment = slugify(self._assignment.title)
+        assignment = slugify(self._assignment.name)
         submissions_dir = config.root_path / assignment / config.submissions_path
-        student_name = slugify(self._student.student_name)
+        student_name = slugify(self._student.name)
         code_dir = config.root_path / assignment / config.code_path / student_name
 
         match list(submissions_dir.glob(student_name + "_*.zip")):
