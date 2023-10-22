@@ -167,11 +167,16 @@ class UncompressCodeTask(Task):
         match list(submissions_dir.glob(student_name + "_*.zip")):
             case [path]:
                 if code_dir.exists():
-                    self.log(f"Removing existing directory {code_dir}")
+                    self.app.call_from_thread(
+                        self.notify,
+                        f"Removing existing directory {code_dir}",
+                        severity="warning",
+                    )
                     shutil.rmtree(code_dir)
                 Path.mkdir(code_dir, parents=True)
                 with ZipFile(path) as f:
                     f.extractall(path=code_dir)
+                self.app.call_from_thread(self.notify, "Extracted submitted files")
             case [_, *_]:
                 raise RuntimeError("More than one submission file")
             case _:
@@ -185,9 +190,9 @@ class CreateEnvTask(Task):
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        env_name = "ECPC_" + slugify(self._student.student_name)
+        env_name = "ECPC_" + slugify(self._student.name)
         process = subprocess.run(
-            f"conda create -n {env_name} python=3.9 --yes",
+            f"conda create -n {env_name} python=3.10 --yes",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -195,6 +200,7 @@ class CreateEnvTask(Task):
         self.log(process.stdout.decode())
         if process.returncode:
             raise RuntimeError(f"Process exited with exit code: {process.returncode}")
+        self.app.call_from_thread(self.notify, "Created clean conda environment")
 
 
 class OpenCodeTask(Task):
@@ -205,9 +211,9 @@ class OpenCodeTask(Task):
     @work(thread=True, exit_on_error=False)
     def run_task(self):
         config = self.app.config
-        assignment = slugify(self._assignment.title)
-        student_name = slugify(self._student.student_name)
-        env_name = "ECPC_" + slugify(self._student.student_name)
+        assignment = slugify(self._assignment.name)
+        student_name = slugify(self._student.name)
+        env_name = "ECPC_" + slugify(self._student.name)
         code_dir = config.root_path / assignment / config.code_path / student_name
 
         dir_contents: Path = list(code_dir.iterdir())
