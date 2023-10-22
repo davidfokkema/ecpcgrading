@@ -23,9 +23,10 @@ from ecpcgrading import canvas, tasks
 
 
 class Assignment(ListItem):
-    def __init__(self, title: str) -> None:
+    def __init__(self, assignment: CanvasAssignment) -> None:
         super().__init__()
-        self.title = title
+        self._assignment = assignment
+        self.title = assignment.name
 
     def compose(self) -> ComposeResult:
         yield Label(self.title)
@@ -34,7 +35,7 @@ class Assignment(ListItem):
 class Assignments(ListView):
     def compose(self) -> ComposeResult:
         for assignment in self.app.assignments:
-            yield Assignment(assignment.name)
+            yield Assignment(assignment)
 
     def on_list_view_selected(self, event: "Assignments.Selected") -> None:
         assignment: Assignment = event.item
@@ -58,9 +59,10 @@ class AssignmentsScreen(Screen):
 
 
 class Student(ListItem):
-    def __init__(self, student_name: str) -> None:
+    def __init__(self, student: CanvasStudent) -> None:
         super().__init__()
-        self.student_name = student_name
+        self._student = student
+        self.student_name = student.name
 
     def compose(self) -> ComposeResult:
         yield Label(self.student_name)
@@ -73,7 +75,7 @@ class Students(ListView):
 
     def compose(self) -> ComposeResult:
         for student in self.app.students:
-            yield Student(student.name)
+            yield Student(student)
 
     def on_list_view_selected(self, event: "Students.Selected") -> None:
         student: Student = event.item
