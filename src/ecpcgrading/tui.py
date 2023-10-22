@@ -1,7 +1,10 @@
 from pathlib import Path
 
+from canvas_course_tools.canvas_tasks import CanvasTasks
 from canvas_course_tools.datatypes import Assignment as CanvasAssignment
+from canvas_course_tools.datatypes import Course as CanvasCourse
 from canvas_course_tools.datatypes import Student as CanvasStudent
+from canvas_course_tools.utils import find_course
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.containers import Center, Horizontal, Vertical
@@ -156,6 +159,8 @@ class TasksScreen(Screen):
 
 
 class StartupScreen(ModalScreen):
+    app: "GradingTool"
+
     def compose(self) -> ComposeResult:
         with Vertical(id="modal_dialog"):
             with Center():
@@ -169,12 +174,15 @@ class StartupScreen(ModalScreen):
     @work(thread=True)
     def get_assignments_and_students(self) -> list[str]:
         config: ecpcgrading.config.Config = self.app.config
+        canvas_tasks, course = find_course(config.course_alias)
         assignments = canvas.get_assignments(
-            config.server, config.course_id, config.assignment_group
+            canvas_tasks, course, config.assignment_group
         )
         students = canvas.get_students(
-            config.server, config.course_id, config.groupset, config.group
+            canvas_tasks, course, config.groupset, config.group
         )
+        self.app.canvas_tasks = canvas_tasks
+        self.app.course = course
         return assignments, students
 
     @on(Worker.StateChanged)
@@ -190,6 +198,8 @@ class GradingTool(App):
     BINDINGS = [("q", "quit", "Quit")]
 
     config: ecpcgrading.config.Config
+    canvas_tasks: CanvasTasks
+    course: CanvasCourse
     assignments: list[CanvasAssignment]
     students: list[CanvasStudent]
 

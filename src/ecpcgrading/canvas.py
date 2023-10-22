@@ -1,52 +1,57 @@
 from canvas_course_tools import utils
-from canvas_course_tools.datatypes import Assignment, Student
+from canvas_course_tools.canvas_tasks import CanvasTasks
+from canvas_course_tools.datatypes import Assignment, Course, Student, Submission
 from unidecode import unidecode
 
 
-def get_assignments(server: str, course_id: int, group_name: str) -> list[Assignment]:
+def get_assignments(
+    canvas_tasks: CanvasTasks, course: Course, group_name: str
+) -> list[Assignment]:
     """Get ECPC assignments from Canvas
 
     Get all assignments from the ECPC assignment group for the specified course
     from the Canvas server.
 
     Args:
-        server (str): the Canvas server
-        course_id (int): the course id for which to fetch the assignments
+        canvas_tasks (CanvasTasks): a CanvasTasks instance
+        course (Course): the course object containing the assignments
         group_name (str): the name of the assignment group
 
     Returns:
         list[Assignment]: a list of assignments
     """
-    canvas = utils.get_canvas(server)
-    course = canvas.get_course(course_id)
-    assignment_groups = canvas.get_assignment_groups(course)
+    assignment_groups = canvas_tasks.get_assignment_groups(course)
     ecpc = next(group for group in assignment_groups if group.name == group_name)
-    return canvas.get_assignments_for_group(ecpc)
+    return canvas_tasks.get_assignments_for_group(ecpc)
 
 
 def get_students(
-    server: str, course_id: int, groupset_name: str | None, group_name: str | None
+    canvas_tasks: CanvasTasks,
+    course: Course,
+    groupset_name: str | None,
+    group_name: str | None,
 ) -> list[Student]:
-    canvas = utils.get_canvas(server)
-    course = canvas.get_course(course_id)
-
     match groupset_name, group_name:
         case (str(), str()):
-            groupset = get_groupset_by_name(groupset_name, canvas, course)
-            group = get_group_from_groupset_by_name(group_name, canvas, groupset)
-            return canvas.get_students_in_group(group)
+            groupset = get_groupset_by_name(groupset_name, canvas_tasks, course)
+            group = get_group_from_groupset_by_name(group_name, canvas_tasks, groupset)
+            return canvas_tasks.get_students_in_group(group)
         case (str(), None):
             students = []
-            groupset = get_groupset_by_name(groupset_name, canvas, course)
-            for group in canvas.list_groups(groupset):
-                students.extend(canvas.get_students_in_group(group))
+            groupset = get_groupset_by_name(groupset_name, canvas_tasks, course)
+            for group in canvas_tasks.list_groups(groupset):
+                students.extend(canvas_tasks.get_students_in_group(group))
             return sorted(
                 students, key=lambda x: unidecode(getattr(x, "sortable_name"))
             )
         case (None, str()):
             raise RuntimeError(f"Group {group_name} specified without 'groupset'")
         case _:
-            return canvas.get_students(course_id=course.id)
+            return canvas_tasks.get_students(course_id=course.id)
+
+
+def get_submission(assignment: Assignment, student: Student) -> Submission:
+    ...
 
 
 def get_groupset_by_name(groupset_name, canvas, course):

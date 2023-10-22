@@ -9,8 +9,7 @@ class Config(BaseModel):
     submissions_path: Path = Path("submissions")
     code_path: Path = Path("code")
     env_prefix: str = "ECPC_"
-    server: str
-    course_id: int
+    course_alias: str
     assignment_group: str
     groupset: str | None = None
     group: str | None = None
