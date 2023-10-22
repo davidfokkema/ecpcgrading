@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from zipfile import ZipFile
 
+import requests
+from canvas_course_tools.datatypes import Attachment
 from slugify import slugify
 from textual import on, work
 from textual.app import ComposeResult, log
@@ -109,26 +111,46 @@ class DownloadTask(Task):
     def run_task(self):
         # FIXME: this is placeholder code to grab a file from the filesystem instead of a canvas download
         config = self.app.config
-        assignment = slugify(self._assignment.name)
-        submissions_dir = config.root_path / assignment / config.submissions_path
-
-        print(f"{self._assignment=}")
-        print(f"{self._student=}")
+        assignment_name = slugify(self._assignment.name)
+        student_name = slugify(self._student.name)
+        submissions_dir = config.root_path / assignment_name / config.submissions_path
 
         submission = self.app.canvas_tasks.get_submission(
             self._assignment, self._student
         )
 
-        print(submission)
-
-        self.app.call_from_thread(self.notify, "Foo", severity="warning")
-
-        submission_path = submissions_dir / (
-            slugify(self._student.name) + "_pythondaq.zip"
-        )
         Path.mkdir(submissions_dir, parents=True, exist_ok=True)
-        shutil.copy(Path.home() / "tmp" / "test_coursedaq.zip", submission_path)
-        time.sleep(1)
+        match submission.attachments:
+            case [
+                Attachment(content_type="application/x-zip-compressed") as attachment
+            ]:
+                submission_path = submissions_dir / (
+                    student_name + "_" + attachment.name
+                )
+                file_contents = requests.get(attachment.url).content
+                submission_path.write_bytes(file_contents)
+                self.app.call_from_thread(self.notify, f"Downloaded a single zipfile")
+            case [attachment]:
+                submission_path = submissions_dir / (student_name + "_zipped.zip")
+                file_contents = requests.get(attachment.url).content
+                with ZipFile(submission_path, mode="w") as f:
+                    f.writestr(attachment.name, data=file_contents)
+                self.app.call_from_thread(
+                    self.notify,
+                    f"Zipped single attachment ({attachment.content_type})",
+                    severity="warning",
+                )
+            case [*attachments]:
+                submission_path = submissions_dir / (student_name + "_zipped.zip")
+                with ZipFile(submission_path, mode="w") as f:
+                    for attachment in attachments:
+                        file_contents = requests.get(attachment.url).content
+                        f.writestr(attachment.name, data=file_contents)
+                self.app.call_from_thread(
+                    self.notify,
+                    f"Zipped {len(attachments)} attachments",
+                    severity="warning",
+                )
 
 
 class UncompressCodeTask(Task):
