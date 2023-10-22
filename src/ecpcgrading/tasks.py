@@ -7,7 +7,9 @@ from typing import TYPE_CHECKING
 from zipfile import ZipFile
 
 import requests
+from canvas_course_tools.datatypes import Assignment as CanvasAssignment
 from canvas_course_tools.datatypes import Attachment
+from canvas_course_tools.datatypes import Student as CanvasStudent
 from slugify import slugify
 from textual import on, work
 from textual.app import ComposeResult, log
@@ -15,6 +17,8 @@ from textual.containers import Center, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Label, ListItem, LoadingIndicator
 from textual.worker import Worker, WorkerState
+
+from ecpcgrading.config import Config
 
 if TYPE_CHECKING:
     from ecpcgrading.tui import Assignment, GradingTool, Student
@@ -108,10 +112,8 @@ class DownloadTask(Task):
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        config = self.app.config
-        assignment_name = slugify(self._assignment.name)
         student_name = slugify(self._student.name)
-        submissions_dir = config.root_path / assignment_name / config.submissions_path
+        submissions_dir = get_submissions_dir(self.app.config, self._assignment)
 
         submission = self.app.canvas_tasks.get_submission(
             self._assignment, self._student
@@ -158,11 +160,9 @@ class UncompressCodeTask(Task):
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        config = self.app.config
-        assignment = slugify(self._assignment.name)
-        submissions_dir = config.root_path / assignment / config.submissions_path
+        submissions_dir = get_submissions_dir(self.app.config, self._assignment)
+        code_dir = get_code_dir(self.app.config, self._assignment, self._student)
         student_name = slugify(self._student.name)
-        code_dir = config.root_path / assignment / config.code_path / student_name
 
         match list(submissions_dir.glob(student_name + "_*.zip")):
             case [path]:
@@ -229,3 +229,16 @@ class OpenCodeTask(Task):
         self.log(process.stdout.decode())
         if process.returncode:
             raise RuntimeError(f"Process exited with exit code: {process.returncode}")
+
+
+def get_submissions_dir(config: Config, assignment: CanvasAssignment):
+    return config.root_path / slugify(assignment.name) / config.submissions_path
+
+
+def get_code_dir(config: Config, assignment: CanvasAssignment, student: CanvasStudent):
+    return (
+        config.root_path
+        / slugify(assignment.name)
+        / config.code_path
+        / slugify(student.name)
+    )
