@@ -2,11 +2,9 @@ from pathlib import Path
 
 from canvas_course_tools.datatypes import Assignment as CanvasAssignment
 from canvas_course_tools.datatypes import Student as CanvasStudent
-from faker import Faker
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.containers import Center, Horizontal, Vertical
-from textual.reactive import reactive
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
