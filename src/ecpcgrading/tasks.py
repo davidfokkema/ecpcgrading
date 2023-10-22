@@ -130,18 +130,11 @@ class DownloadTask(Task):
                 file_contents = requests.get(attachment.url).content
                 submission_path.write_bytes(file_contents)
                 self.app.call_from_thread(self.notify, f"Downloaded a single zipfile")
-            case [attachment]:
-                self.zip_attachments(student_name, submissions_dir, [attachment])
-                self.app.call_from_thread(
-                    self.notify,
-                    f"Zipped single attachment ({attachment.content_type})",
-                    severity="warning",
-                )
             case [*attachments]:
                 self.zip_attachments(student_name, submissions_dir, attachments)
                 self.app.call_from_thread(
                     self.notify,
-                    f"Zipped {len(attachments)} attachments",
+                    f"Zipped {len(attachments)} submitted file(s)",
                     severity="warning",
                 )
 
