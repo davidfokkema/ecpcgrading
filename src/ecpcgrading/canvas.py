@@ -50,10 +50,6 @@ def get_students(
             return canvas_tasks.get_students(course_id=course.id)
 
 
-def get_submission(assignment: Assignment, student: Student) -> Submission:
-    ...
-
-
 def get_groupset_by_name(groupset_name, canvas, course):
     groupsets = canvas.list_groupsets(course)
     try:

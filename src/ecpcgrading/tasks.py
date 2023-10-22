@@ -34,8 +34,8 @@ class Task(ListItem):
         yield Label(self.title)
 
     def execute(self, assignment: Assignment, student: Student) -> None:
-        self._assignment = assignment
-        self._student = student
+        self._assignment = assignment._assignment
+        self._student = student._student
         self.app.push_screen(RunTaskModal(self.run_msg))
         self.run_task()
 
@@ -109,10 +109,22 @@ class DownloadTask(Task):
     def run_task(self):
         # FIXME: this is placeholder code to grab a file from the filesystem instead of a canvas download
         config = self.app.config
-        assignment = slugify(self._assignment.title)
+        assignment = slugify(self._assignment.name)
         submissions_dir = config.root_path / assignment / config.submissions_path
+
+        print(f"{self._assignment=}")
+        print(f"{self._student=}")
+
+        submission = self.app.canvas_tasks.get_submission(
+            self._assignment, self._student
+        )
+
+        print(submission)
+
+        self.app.call_from_thread(self.notify, "Foo", severity="warning")
+
         submission_path = submissions_dir / (
-            slugify(self._student.student_name) + "_pythondaq.zip"
+            slugify(self._student.name) + "_pythondaq.zip"
         )
         Path.mkdir(submissions_dir, parents=True, exist_ok=True)
         shutil.copy(Path.home() / "tmp" / "test_coursedaq.zip", submission_path)
