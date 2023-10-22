@@ -215,6 +215,8 @@ class GradingTool(App):
         self.app.push_screen(StartupScreen(), callback=callback)
 
 
+def app():
+    GradingTool().run()
+
 if __name__ == "__main__":
-    app = GradingTool()
-    app.run()
+    app()
