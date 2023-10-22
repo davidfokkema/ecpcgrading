@@ -204,13 +204,13 @@ tests-no-zope = ["cloudpickle", "hypothesis", "mypy (>=1.1.1)", "pympler", "pyte
 
 [[package]]
 name = "canvas-course-tools"
-version = "0.6.2"
+version = "0.7.0"
 description = "Canvas course tools"
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "canvas_course_tools-0.6.2-py3-none-any.whl", hash = "sha256:ac749c6e78a0d5f823941371a74b655899afc56d27136e1e43fd380218cdb755"},
-    {file = "canvas_course_tools-0.6.2.tar.gz", hash = "sha256:5dccda8d44eb5a62fd952d9b97797e44d77bcbdf48efc1c62f79f990f4e17bec"},
+    {file = "canvas_course_tools-0.7.0-py3-none-any.whl", hash = "sha256:5ebe1fb72e232a2ec2b99b90934e9828d9fd0a95abf19d945c8f998728a89198"},
+    {file = "canvas_course_tools-0.7.0.tar.gz", hash = "sha256:7671abf807e97ad3326ac80be13f376d5fb8b41b7003f320245c56f764594a72"},
 ]
 
 [package.dependencies]
@@ -1398,4 +1398,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "1ce04dbe6b5f16c71f17105534379f6019aecd8a81dbb6c4a9e5d550f7bf5c8a"
+content-hash = "f8076aeaa5bd712d7ed06963b2a0185c37c40ff95d9459fe53c28f20bf9ce108"
