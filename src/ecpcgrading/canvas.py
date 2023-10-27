@@ -1,6 +1,5 @@
-from canvas_course_tools import utils
 from canvas_course_tools.canvas_tasks import CanvasTasks
-from canvas_course_tools.datatypes import Assignment, Course, Student, Submission
+from canvas_course_tools.datatypes import Assignment, Course, Student
 from unidecode import unidecode
 
 
@@ -22,7 +21,8 @@ def get_assignments(
     """
     assignment_groups = canvas_tasks.get_assignment_groups(course)
     ecpc = next(group for group in assignment_groups if group.name == group_name)
-    return canvas_tasks.get_assignments_for_group(ecpc)
+    assignments = canvas_tasks.get_assignments_for_group(ecpc)
+    return [a for a in assignments if "online_upload" in a.submission_types]
 
 
 def get_students(
