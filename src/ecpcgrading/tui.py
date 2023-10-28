@@ -210,7 +210,11 @@ class GradingTool(App):
 
     def __init__(self):
         super().__init__()
-        self.config = ecpcgrading.config.read_config(Path.cwd())
+        try:
+            self.config = ecpcgrading.config.read_config(Path.cwd())
+        except FileNotFoundError:
+            print("No grading.toml file found. Are you in the correct folder?")
+            self.exit()
 
     def on_mount(self) -> None:
         def callback(result):
