@@ -46,6 +46,8 @@ class Assignments(ListView):
 
 
 class AssignmentsScreen(Screen):
+    app: "GradingTool"
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
@@ -53,6 +55,9 @@ class AssignmentsScreen(Screen):
             Button(".", id="back", disabled=True),
             Static("", id="spacer"),
             id="breadcrumbs",
+        )
+        yield Label(
+            f"{self.app.course.name} - {self.app.course.term}", id="course_info"
         )
         yield Label("Please Select an Assignment", id="list_header")
         yield Assignments(id="assignments")
@@ -217,6 +222,7 @@ class GradingTool(App):
 
 def app():
     GradingTool().run()
+
 
 if __name__ == "__main__":
     app()
