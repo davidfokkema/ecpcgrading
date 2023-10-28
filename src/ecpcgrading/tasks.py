@@ -118,6 +118,8 @@ class DownloadTask(Task):
         submission = self.app.canvas_tasks.get_submission(
             self._assignment, self._student
         )
+        if submission.attempt is None:
+            raise RuntimeError(f"Student did not yet submit this assignment")
 
         Path.mkdir(submissions_dir, parents=True, exist_ok=True)
         match submission.attachments:
