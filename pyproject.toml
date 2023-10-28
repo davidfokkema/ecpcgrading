@@ -9,7 +9,7 @@ python = "^3.10"
 click = "^8.0.3"
 tomlkit = "^0.7.2"
 rich = "^13.4.2"
-textual = "^0.35.1"
+textual = "^0.40.0"
 pydantic = "^2.1.1"
 python-slugify = "^8.0.1"
 canvas-course-tools = "^0.8.0"
@@ -18,7 +18,7 @@ tomli = { version = "^2.0.1", python = '<3.11' }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^5.2"
-textual-dev = "^1.1.0"
+textual-dev = "^1.2.1"
 faker = "^19.2.0"
 
 [build-system]
