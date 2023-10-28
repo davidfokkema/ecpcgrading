@@ -20,9 +20,13 @@ def get_assignments(
         list[Assignment]: a list of assignments
     """
     assignment_groups = canvas_tasks.get_assignment_groups(course)
-    ecpc = next(group for group in assignment_groups if group.name == group_name)
-    assignments = canvas_tasks.get_assignments_for_group(ecpc)
-    return [a for a in assignments if "online_upload" in a.submission_types]
+    try:
+        ecpc = next(group for group in assignment_groups if group.name == group_name)
+    except StopIteration:
+        raise RuntimeError(f"Assignment group {group_name} not found.")
+    else:
+        assignments = canvas_tasks.get_assignments_for_group(ecpc)
+        return [a for a in assignments if "online_upload" in a.submission_types]
 
 
 def get_students(
