@@ -1,3 +1,4 @@
+from functools import partial
 from pathlib import Path
 
 from canvas_course_tools.canvas_tasks import CanvasTasks
@@ -7,6 +8,7 @@ from canvas_course_tools.datatypes import Student as CanvasStudent
 from canvas_course_tools.utils import find_course
 from textual import on, work
 from textual.app import App, ComposeResult
+from textual.command import Hit, Hits, Provider
 from textual.containers import Center, Horizontal, Vertical
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
@@ -85,13 +87,27 @@ class Students(ListView):
         for student in self.app.students:
             yield Student(student)
 
-    def on_list_view_selected(self, event: "Students.Selected") -> None:
-        student: Student = event.item
-        self.app.push_screen(TasksScreen(self.assignment, student))
+
+class GradeStudentCommands(Provider):
+    app: "GradingTool"
+
+    async def search(self, query: str) -> Hits:
+        print("FOO")
+        matcher = self.matcher(query)
+        for student in self.app.students:
+            command = f"grade {student.name}"
+            score = matcher.match(command)
+            if score > 0:
+                yield Hit(
+                    score,
+                    matcher.highlight(command),
+                    partial(self.screen.show_tasks, Student(student)),
+                )
 
 
 class StudentsScreen(Screen):
     BINDINGS = [("b", "go_back", "Back to Assignments")]
+    COMMANDS = App.COMMANDS | {GradeStudentCommands}
 
     def __init__(self, assignment: Assignment) -> None:
         super().__init__()
@@ -115,6 +131,13 @@ class StudentsScreen(Screen):
     @on(Button.Pressed, "#back")
     def action_go_back(self) -> None:
         self.dismiss()
+
+    @on(Students.Selected)
+    def select_student(self, event: Students.Selected) -> None:
+        self.show_tasks(event.item)
+
+    def show_tasks(self, student: Student) -> None:
+        self.app.push_screen(TasksScreen(self.assignment, student))
 
 
 class Tasks(ListView):
