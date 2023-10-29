@@ -141,6 +141,8 @@ class StudentsScreen(Screen):
 
 
 class Tasks(ListView):
+    app: "GradingTool"
+
     def __init__(self, assignment: Assignment, student: Student) -> None:
         super().__init__()
         self.assignment = assignment
@@ -149,7 +151,8 @@ class Tasks(ListView):
     def compose(self) -> ComposeResult:
         yield tasks.DownloadTask("Download Submission")
         yield tasks.UncompressCodeTask("Extract submission into grading folder")
-        yield tasks.CreateEnvTask("(Re)create an empty conda environment")
+        for env in self.app.config.env.values():
+            yield tasks.CreateEnvTask(f"Create conda environment: {env.name}", env=env)
         yield tasks.OpenCodeTask("Open Visual Studio Code")
 
     @on(ListView.Selected)

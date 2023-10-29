@@ -18,7 +18,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Label, ListItem, LoadingIndicator
 from textual.worker import Worker, WorkerState
 
-from ecpcgrading.config import Config
+from ecpcgrading.config import Config, EnvironmentConfig
 
 if TYPE_CHECKING:
     from ecpcgrading.tui import Assignment, GradingTool, Student
@@ -183,11 +183,15 @@ class CreateEnvTask(Task):
     success_msg = "Conda environment successfully created"
     error_msg = "Environment creation failed"
 
+    def __init__(self, title: str, env: EnvironmentConfig) -> None:
+        super().__init__(title)
+        self.env = env
+
     @work(thread=True, exit_on_error=False)
     def run_task(self):
         env_name = "ECPC_" + slugify(self._student.name)
         process = subprocess.run(
-            f"conda create -n {env_name} python=3.10 --yes",
+            f"conda create -n {env_name} -c {self.env.channel} {self.env.package_spec} --yes",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

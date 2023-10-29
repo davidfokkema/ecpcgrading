@@ -2,9 +2,16 @@ try:
     import tomllib
 except ModuleNotFoundError:
     import tomli as tomllib
+
 from pathlib import Path
 
 from pydantic import BaseModel
+
+
+class EnvironmentConfig(BaseModel):
+    name: str
+    channel: str = "defaults"
+    package_spec: str = "python"
 
 
 class Config(BaseModel):
@@ -16,6 +23,7 @@ class Config(BaseModel):
     assignment_group: str
     groupset: str | None = None
     group: str | None = None
+    env: dict[str, EnvironmentConfig]
 
 
 def read_config(folder: Path):
