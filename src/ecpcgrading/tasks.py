@@ -220,7 +220,7 @@ class OpenCodeTask(Task):
             code_dir = dir_contents[0]
 
         process = subprocess.run(
-            f"conda run -n {env_name} code '{code_dir}'",
+            f'conda run -n {env_name} code "{code_dir}"',
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
