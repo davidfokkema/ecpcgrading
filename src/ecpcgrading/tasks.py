@@ -124,7 +124,9 @@ class DownloadTask(Task):
         student_name = slugify(self._student.name)
         submissions_dir = get_submissions_dir(self.app.config, self._assignment)
 
-        submission = self.app.canvas_get_submission(self._assignment, self._student)
+        submission = self.app.canvas_tasks.get_submission(
+            self._assignment, self._student
+        )
         if submission.attempt is None:
             raise RuntimeError(f"Student did not yet submit this assignment")
 
