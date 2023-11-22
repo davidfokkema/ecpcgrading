@@ -24,7 +24,8 @@ from textual.widgets import (
 from textual.worker import Worker, WorkerState
 
 import ecpcgrading.config
-from ecpcgrading import canvas, tasks
+from ecpcgrading import canvas
+from ecpcgrading.tasks import TasksScreen
 
 
 class Assignment(ListItem):
@@ -138,55 +139,6 @@ class StudentsScreen(Screen):
 
     def show_tasks(self, student: Student) -> None:
         self.app.push_screen(TasksScreen(self.assignment, student))
-
-
-class Tasks(ListView):
-    app: "GradingTool"
-
-    def __init__(self, assignment: Assignment, student: Student) -> None:
-        super().__init__()
-        self.assignment = assignment
-        self.student = student
-
-    def compose(self) -> ComposeResult:
-        yield tasks.DownloadTask("Download Submission")
-        yield tasks.UncompressCodeTask("Extract submission into grading folder")
-        for env in self.app.config.env.values():
-            yield tasks.CreateEnvTask(f"Create conda environment: {env.name}", env=env)
-        yield tasks.OpenCodeTask("Open Visual Studio Code")
-
-    @on(ListView.Selected)
-    def execute_task(self, selected: ListView.Selected) -> None:
-        selected.item.execute(self.assignment, self.student)
-
-
-class TasksScreen(Screen):
-    BINDINGS = [("b", "go_back", "Back to Students")]
-
-    def __init__(self, assignment: Assignment, student: Student) -> None:
-        super().__init__()
-        self.assignment = assignment
-        self.student = student
-
-    def compose(self) -> ComposeResult:
-        yield Header()
-        yield Footer()
-        yield Horizontal(
-            Button("< Students", id="back"),
-            Static("", id="spacer"),
-            Label(self.assignment.title),
-            Label(f"({self.student.student_name})"),
-            id="breadcrumbs",
-        )
-        yield Label("Please Select a Task", id="list_header")
-        yield Tasks(self.assignment, self.student)
-
-    def on_mount(self) -> None:
-        self.query_one("Tasks").focus()
-
-    @on(Button.Pressed, "#back")
-    def action_go_back(self) -> None:
-        self.dismiss()
 
 
 class StartupScreen(ModalScreen):
