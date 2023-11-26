@@ -30,7 +30,9 @@ from textual.worker import Worker, WorkerState
 from ecpcgrading.config import Config, EnvironmentConfig
 
 if TYPE_CHECKING:
-    from ecpcgrading.tui import Assignment, GradingTool, Student
+    from ecpcgrading.assignments import Assignment
+    from ecpcgrading.students import Student
+    from ecpcgrading.tui import GradingTool
 
 
 class Task(ListItem):
