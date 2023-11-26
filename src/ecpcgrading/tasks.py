@@ -13,15 +13,26 @@ from canvas_course_tools.datatypes import Student as CanvasStudent
 from slugify import slugify
 from textual import on, work
 from textual.app import ComposeResult, log
-from textual.containers import Center, Vertical
-from textual.screen import ModalScreen
-from textual.widgets import Button, Label, ListItem, LoadingIndicator
+from textual.containers import Center, Horizontal, Vertical
+from textual.screen import ModalScreen, Screen
+from textual.widgets import (
+    Button,
+    Footer,
+    Header,
+    Label,
+    ListItem,
+    ListView,
+    LoadingIndicator,
+    Static,
+)
 from textual.worker import Worker, WorkerState
 
 from ecpcgrading.config import Config, EnvironmentConfig
 
 if TYPE_CHECKING:
-    from ecpcgrading.tui import Assignment, GradingTool, Student
+    from ecpcgrading.assignments import Assignment
+    from ecpcgrading.students import Student
+    from ecpcgrading.tui import GradingTool
 
 
 class Task(ListItem):
@@ -241,3 +252,52 @@ def get_code_dir(config: Config, assignment: CanvasAssignment, student: CanvasSt
         / config.code_path
         / slugify(student.name)
     )
+
+
+class Tasks(ListView):
+    app: "GradingTool"
+
+    def __init__(self, assignment: Assignment, student: Student) -> None:
+        super().__init__()
+        self.assignment = assignment
+        self.student = student
+
+    def compose(self) -> ComposeResult:
+        yield DownloadTask("Download Submission")
+        yield UncompressCodeTask("Extract submission into grading folder")
+        for env in self.app.config.env.values():
+            yield CreateEnvTask(f"Create conda environment: {env.name}", env=env)
+        yield OpenCodeTask("Open Visual Studio Code")
+
+    @on(ListView.Selected)
+    def execute_task(self, selected: ListView.Selected) -> None:
+        selected.item.execute(self.assignment, self.student)
+
+
+class TasksScreen(Screen):
+    BINDINGS = [("b", "go_back", "Back to Students")]
+
+    def __init__(self, assignment: Assignment, student: Student) -> None:
+        super().__init__()
+        self.assignment = assignment
+        self.student = student
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Footer()
+        yield Horizontal(
+            Button("< Students", id="back"),
+            Static("", id="spacer"),
+            Label(self.assignment.title),
+            Label(f"({self.student.student_name})"),
+            id="breadcrumbs",
+        )
+        yield Label("Please Select a Task", id="list_header")
+        yield Tasks(self.assignment, self.student)
+
+    def on_mount(self) -> None:
+        self.query_one("Tasks").focus()
+
+    @on(Button.Pressed, "#back")
+    def action_go_back(self) -> None:
+        self.dismiss()
