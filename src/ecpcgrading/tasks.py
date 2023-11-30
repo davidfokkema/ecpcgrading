@@ -42,18 +42,19 @@ class Task(ListItem):
 
     app: GradingTool
 
-    def __init__(self, title: str) -> None:
-        super().__init__()
+    def __init__(self, title: str = "", *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.title = title
 
     def compose(self) -> ComposeResult:
         yield Label(self.title)
 
-    def execute(self, assignment: Assignment, student: Student) -> None:
+    def execute(self, assignment: Assignment, student: Student) -> Worker:
         self._assignment = assignment._assignment
         self._student = student._student
         self.app.push_screen(RunTaskModal(self.run_msg))
-        self.run_task()
+        # run worker and return worker to caller
+        return self.run_task()
 
     @work(thread=True)
     def run_task(self) -> None:
@@ -194,8 +195,8 @@ class CreateEnvTask(Task):
     success_msg = "Conda environment successfully created"
     error_msg = "Environment creation failed"
 
-    def __init__(self, title: str, env: EnvironmentConfig) -> None:
-        super().__init__(title)
+    def __init__(self, title: str, env: EnvironmentConfig, *args, **kwargs) -> None:
+        super().__init__(title, *args, **kwargs)
         self.env = env
 
     @work(thread=True, exit_on_error=False)
@@ -263,10 +264,16 @@ class Tasks(ListView):
         self.student = student
 
     def compose(self) -> ComposeResult:
-        yield DownloadTask("Download Submission")
-        yield UncompressCodeTask("Extract submission into grading folder")
-        for env in self.app.config.env.values():
-            yield CreateEnvTask(f"Create conda environment: {env.name}", env=env)
+        yield DownloadTask("Download Submission", id="download_task")
+        yield UncompressCodeTask(
+            "Extract submission into grading folder", id="extract_task"
+        )
+        for idx, env in enumerate(self.app.config.env.values()):
+            yield CreateEnvTask(
+                f"Create conda environment: {env.name}",
+                env=env,
+                id=f"create_env{idx}_task",
+            )
         yield OpenCodeTask("Open Visual Studio Code")
 
     @on(ListView.Selected)
@@ -275,7 +282,7 @@ class Tasks(ListView):
 
 
 class TasksScreen(Screen):
-    BINDINGS = [("b", "go_back", "Back to Students")]
+    BINDINGS = [("b", "go_back", "Back to Students"), ("s", "speedrun", "Speedrun")]
 
     def __init__(self, assignment: Assignment, student: Student) -> None:
         super().__init__()
@@ -301,3 +308,9 @@ class TasksScreen(Screen):
     @on(Button.Pressed, "#back")
     def action_go_back(self) -> None:
         self.dismiss()
+
+    async def action_speedrun(self):
+        for task_id in ["#download_task", "#extract_task", "#create_env0_task"]:
+            task: Task = self.query_one(task_id)
+            worker = task.execute(self.assignment, self.student)
+            await worker.wait()
