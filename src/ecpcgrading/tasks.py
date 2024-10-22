@@ -57,8 +57,7 @@ class Task(ListItem):
         return self.run_task()
 
     @work(thread=True)
-    def run_task(self) -> None:
-        ...
+    def run_task(self) -> None: ...
 
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         if event.state == WorkerState.RUNNING:
@@ -274,7 +273,7 @@ class Tasks(ListView):
                 env=env,
                 id=f"create_env{idx}_task",
             )
-        yield OpenCodeTask("Open Visual Studio Code")
+        yield OpenCodeTask("Open Visual Studio Code", id="open_vscode_task")
 
     @on(ListView.Selected)
     def execute_task(self, selected: ListView.Selected) -> None:
@@ -282,7 +281,11 @@ class Tasks(ListView):
 
 
 class TasksScreen(Screen):
-    BINDINGS = [("b", "go_back", "Back to Students"), ("s", "speedrun", "Speedrun")]
+    BINDINGS = [
+        ("b", "go_back", "Back to Students"),
+        ("s", "speedrun", "Speedrun"),
+        ("o", "open_vscode", "Open VS Code"),
+    ]
 
     def __init__(self, assignment: Assignment, student: Student) -> None:
         super().__init__()
@@ -309,8 +312,15 @@ class TasksScreen(Screen):
     def action_go_back(self) -> None:
         self.dismiss()
 
-    async def action_speedrun(self):
+    async def action_speedrun(self) -> None:
         for task_id in ["#download_task", "#extract_task", "#create_env0_task"]:
             task: Task = self.query_one(task_id)
             worker = task.execute(self.assignment, self.student)
             await worker.wait()
+
+    async def action_open_vscode(self) -> None:
+        await (
+            self.query_one("#open_vscode_task")
+            .execute(self.assignment, self.student)
+            .wait()
+        )
