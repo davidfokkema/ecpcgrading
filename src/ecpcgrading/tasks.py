@@ -171,7 +171,7 @@ class UncompressCodeTask(Task):
         code_dir = get_code_dir(self.app.config, self._assignment, self._student)
         student_name = slugify(self._student.name)
 
-        match list(submissions_dir.glob(student_name + "_*.zip")):
+        match list(submissions_dir.glob(f"{student_name}_*")):
             case [path]:
                 if code_dir.exists():
                     self.app.call_from_thread(
@@ -181,9 +181,18 @@ class UncompressCodeTask(Task):
                     )
                     shutil.rmtree(code_dir)
                 Path.mkdir(code_dir, parents=True)
-                with ZipFile(path) as f:
-                    f.extractall(path=code_dir)
-                self.app.call_from_thread(self.notify, "Extracted submitted files")
+                match path.suffix:
+                    case ".zip":
+                        with ZipFile(path) as f:
+                            f.extractall(path=code_dir)
+                        self.app.call_from_thread(
+                            self.notify, "Extracted submitted files"
+                        )
+                    case ".bundle":
+                        subprocess.run(["git", "clone", path, code_dir])
+                        self.app.call_from_thread(
+                            self.notify, "Cloned submitted repository"
+                        )
             case [_, *_]:
                 raise RuntimeError("More than one submission file")
             case _:
