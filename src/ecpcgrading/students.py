@@ -42,7 +42,6 @@ class GradeStudentCommands(Provider):
     app: "GradingTool"
 
     async def search(self, query: str) -> Hits:
-        print("FOO")
         matcher = self.matcher(query)
         for student in self.app.students:
             command = f"grade {student.name}"
