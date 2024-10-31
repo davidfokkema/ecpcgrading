@@ -51,7 +51,9 @@ def get_students(
         case (None, str()):
             raise RuntimeError(f"Group {group_name} specified without 'groupset'")
         case _:
-            return canvas_tasks.get_students(course_id=course.id)
+            return canvas_tasks.get_students(
+                course_id=course.id, show_test_student=True
+            )
 
 
 def get_groupset_by_name(groupset_name, canvas, course):
