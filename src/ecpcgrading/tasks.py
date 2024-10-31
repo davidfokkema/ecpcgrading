@@ -130,19 +130,20 @@ class DownloadTask(Task):
             self._assignment, self._student
         )
         if submission.attempt is None:
-            raise RuntimeError(f"Student did not yet submit this assignment")
+            raise RuntimeError("Student did not yet submit this assignment")
 
         Path.mkdir(submissions_dir, parents=True, exist_ok=True)
         match submission.attachments:
-            case [
-                Attachment(content_type="application/x-zip-compressed") as attachment
-            ]:
+            case [Attachment() as attachment]:
                 submission_path = submissions_dir / (
                     student_name + "_" + attachment.name
                 )
+                file_type = submission_path.suffix
                 file_contents = requests.get(attachment.url).content
                 submission_path.write_bytes(file_contents)
-                self.app.call_from_thread(self.notify, f"Downloaded a single zipfile")
+                self.app.call_from_thread(
+                    self.notify, f"Downloaded a single {file_type}-file"
+                )
             case [*attachments]:
                 self.zip_attachments(student_name, submissions_dir, attachments)
                 self.app.call_from_thread(
