@@ -267,7 +267,7 @@ class OpenCodeTask(Task):
             raise RuntimeError(f"Process exited with exit code: {process.returncode}")
 
         # write a .vscode/settings.json with that interpreter selected
-        python_path = process.stdout.decode()
+        python_path = process.stdout.decode().strip()
         (settings_dir := code_dir / ".vscode").mkdir(parents=True, exist_ok=True)
         (settings_dir / "settings.json").write_text(
             json.dumps({"python.defaultInterpreterPath": python_path})
