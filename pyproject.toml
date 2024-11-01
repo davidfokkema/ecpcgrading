@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ecpcgrading"
-version = "1.0.0"
+version = "1.0.1"
 description = "Code grading tool for ECPC"
 authors = ["David Fokkema <davidfokkema@icloud.com>"]
 
