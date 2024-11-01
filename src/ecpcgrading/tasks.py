@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import stat
@@ -242,8 +243,39 @@ class OpenCodeTask(Task):
         if len(dir_contents) == 1 and dir_contents[0].is_dir():
             code_dir = dir_contents[0]
 
+        # A bug in VS Code on macOS breaks environment activation.
+        # Ref: https://github.com/microsoft/vscode-python/issues/23571
+        #
+        # process = subprocess.run(
+        #     f'conda run -n {env_name} code "{code_dir}"',
+        #     shell=True,
+        #     stdout=subprocess.PIPE,
+        #     stderr=subprocess.STDOUT,
+        # )
+        # self.log(process.stdout.decode())
+        # if process.returncode:
+        #     raise RuntimeError(f"Process exited with exit code: {process.returncode}")
+
+        # find the student environment's Python interpreter
         process = subprocess.run(
-            f'conda run -n {env_name} code "{code_dir}"',
+            f'conda run -n {env_name} python -c "import sys; print(sys.executable)"',
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        if process.returncode:
+            raise RuntimeError(f"Process exited with exit code: {process.returncode}")
+
+        # write a .vscode/settings.json with that interpreter selected
+        python_path = process.stdout.decode()
+        (settings_dir := code_dir / ".vscode").mkdir(parents=True, exist_ok=True)
+        (settings_dir / "settings.json").write_text(
+            json.dumps({"python.defaultInterpreterPath": python_path})
+        )
+
+        # start VS Code
+        process = subprocess.run(
+            f'code "{code_dir}"',
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
