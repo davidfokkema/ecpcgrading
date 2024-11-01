@@ -192,7 +192,16 @@ class UncompressCodeTask(Task):
                             self.notify, "Extracted submitted files"
                         )
                     case ".bundle":
-                        subprocess.run(["git", "clone", "-b", "main", path, code_dir])
+                        process = subprocess.run(
+                            ["git", "clone", "-b", "main", path, code_dir],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                        )
+                        self.log(process.stdout.decode())
+                        if process.returncode:
+                            raise RuntimeError(
+                                f"Process exited with exit code: {process.returncode}"
+                            )
                         self.app.call_from_thread(
                             self.notify, "Cloned submitted repository"
                         )
