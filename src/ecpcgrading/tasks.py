@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 import shutil
+import stat
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -179,7 +181,7 @@ class UncompressCodeTask(Task):
                         f"Removing existing directory {code_dir}",
                         severity="warning",
                     )
-                    shutil.rmtree(code_dir)
+                    shutil.rmtree(code_dir, onerror=remove_readonly)
                 Path.mkdir(code_dir, parents=True)
                 match path.suffix:
                     case ".zip":
@@ -262,6 +264,12 @@ def get_code_dir(config: Config, assignment: CanvasAssignment, student: CanvasSt
         / config.code_path
         / slugify(student.name)
     )
+
+
+def remove_readonly(func, path, excinfo):
+    """Make a path writable and retry the failed function call."""
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
 
 
 class Tasks(ListView):
