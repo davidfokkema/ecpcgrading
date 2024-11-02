@@ -205,6 +205,12 @@ class UncompressCodeTask(Task):
                         self.app.call_from_thread(
                             self.notify, "Cloned submitted repository"
                         )
+                    case _:
+                        # default case, .py or something else
+                        # copy it as-is to the code directory
+                        target_name = path.name.removeprefix(f"{student_name}_")
+                        shutil.copy(path, code_dir / target_name)
+                        self.app.call_from_thread(self.notify, f"Copied {target_name}")
             case [_, *_]:
                 raise RuntimeError("More than one submission file")
             case _:
