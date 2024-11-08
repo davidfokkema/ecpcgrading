@@ -28,7 +28,7 @@ from textual.widgets import (
     LoadingIndicator,
     Static,
 )
-from textual.worker import Worker, WorkerState
+from textual.worker import Worker, WorkerFailed, WorkerState
 
 from ecpcgrading.config import Config, EnvironmentConfig
 
@@ -381,11 +381,11 @@ class TasksScreen(Screen):
         for task_id in ["#download_task", "#extract_task", "#create_env0_task"]:
             task: Task = self.query_one(task_id)
             worker = task.execute(self.assignment, self.student)
-            await worker.wait()
+            try:
+                await worker.wait()
+            except WorkerFailed:
+                # abort the speedrun, error is already handled by worker
+                break
 
-    async def action_open_vscode(self) -> None:
-        await (
-            self.query_one("#open_vscode_task")
-            .execute(self.assignment, self.student)
-            .wait()
-        )
+    def action_open_vscode(self) -> None:
+        self.query_one("#open_vscode_task").execute(self.assignment, self.student)
