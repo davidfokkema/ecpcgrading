@@ -3,8 +3,10 @@ from __future__ import annotations
 from functools import partial
 from typing import TYPE_CHECKING
 
+import humanize
 from canvas_course_tools.datatypes import Student as CanvasStudent
-from textual import on
+from canvas_course_tools.datatypes import Submission
+from textual import on, work
 from textual.app import App, ComposeResult
 from textual.command import Hit, Hits, Provider
 from textual.containers import Horizontal
@@ -25,7 +27,9 @@ class Student(ListItem):
         self.student_name = student.name
 
     def compose(self) -> ComposeResult:
-        yield Label(self.student_name)
+        with Horizontal():
+            yield Label(self.student_name)
+            yield Label(id="submission_info")
 
 
 class Students(ListView):
@@ -58,6 +62,8 @@ class StudentsScreen(Screen):
     BINDINGS = [("b", "go_back", "Back to Assignments")]
     COMMANDS = App.COMMANDS | {GradeStudentCommands}
 
+    app: GradingTool
+
     def __init__(self, assignment: Assignment) -> None:
         super().__init__()
         self.assignment = assignment
@@ -76,6 +82,27 @@ class StudentsScreen(Screen):
 
     def on_mount(self) -> None:
         self.query_one("Students").focus()
+        self.load_submission_info()
+
+    @work(thread=True)
+    def load_submission_info(self) -> None:
+        for student in self.query(Student):
+            submission: Submission = self.app.canvas_tasks.get_submission(
+                self.assignment._assignment, student._student
+            )
+            if submission.attempt is None:
+                if submission.time_passed_deadline:
+                    status = "[italic bold red](Not submitted)"
+                else:
+                    status = "[italic bold orange1](Not yet submitted)"
+            elif submission.time_passed_deadline == 0:
+                status = "[italic bold green](On time)"
+            elif submission.time_passed_deadline < 15 * 60:
+                status = f"[italic bold orange1]({humanize.naturaldelta(submission.time_passed_deadline)})"
+            else:
+                status = f"[italic bold red]({humanize.naturaldelta(submission.time_passed_deadline)})"
+            info_widget = student.query_one("#submission_info")
+            self.app.call_from_thread(info_widget.update, status)
 
     @on(Button.Pressed, "#back")
     def action_go_back(self) -> None:

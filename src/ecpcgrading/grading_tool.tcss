@@ -1,9 +1,21 @@
 Assignment>Label,
-Student>Label,
 Task>Label {
     padding: 1;
     width: 100%;
     text-align: center;
+}
+
+Student {
+    padding: 1;
+    width: 100%;
+    align: center top;
+    & Horizontal {
+        width: auto;
+    
+        & Label {
+            margin: 0 4;
+        }
+    }
 }
 
 #list_header, #course_info {
