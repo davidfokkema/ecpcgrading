@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
 
 class Student(ListItem):
+    # status = reactive
     def __init__(self, student: CanvasStudent) -> None:
         super().__init__()
         self._student = student
@@ -87,20 +88,20 @@ class StudentsScreen(Screen):
     @work(thread=True)
     def load_submission_info(self) -> None:
         for student in self.query(Student):
-            submission: Submission = self.app.canvas_tasks.get_submission(
+            submission: Submission = self.app.canvas_tasks.get_submissions(
                 self.assignment._assignment, student._student
             )
             if submission.attempt is None:
-                if submission.time_passed_deadline:
+                if submission.seconds_late > 0:
                     status = "[italic bold red](Not submitted)"
                 else:
                     status = "[italic bold orange1](Not yet submitted)"
-            elif submission.time_passed_deadline == 0:
+            elif submission.attempts[-1].seconds_late == 0:
                 status = "[italic bold green](On time)"
-            elif submission.time_passed_deadline < 15 * 60:
-                status = f"[italic bold orange1]({humanize.naturaldelta(submission.time_passed_deadline)})"
+            elif submission.attempts[-1].seconds_late < 15 * 60:
+                status = f"[italic bold orange1]({humanize.naturaldelta(submission.attempts[-1].seconds_late)})"
             else:
-                status = f"[italic bold red]({humanize.naturaldelta(submission.time_passed_deadline)})"
+                status = f"[italic bold red]({humanize.naturaldelta(submission.attempts[-1].seconds_late)})"
             info_widget = student.query_one("#submission_info")
             self.app.call_from_thread(info_widget.update, status)
 
