@@ -4,8 +4,8 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 import humanize
+from canvas_course_tools.datatypes import CanvasSubmission
 from canvas_course_tools.datatypes import Student as CanvasStudent
-from canvas_course_tools.datatypes import Submission
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.command import Hit, Hits, Provider

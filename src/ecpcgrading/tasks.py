@@ -11,7 +11,7 @@ from zipfile import ZipFile
 
 import requests
 from canvas_course_tools.datatypes import Assignment as CanvasAssignment
-from canvas_course_tools.datatypes import Attachment
+from canvas_course_tools.datatypes import CanvasAttachment
 from canvas_course_tools.datatypes import Student as CanvasStudent
 from slugify import slugify
 from textual import on, work
@@ -129,7 +129,7 @@ class DownloadTask(Task):
         student_name = slugify(self._student.name)
         submissions_dir = get_submissions_dir(self.app.config, self._assignment)
 
-        submission = self.app.canvas_tasks.get_submission(
+        submission = self.app.canvas_tasks.get_submissions(
             self._assignment, self._student
         )
         if submission.attempt is None:
@@ -137,9 +137,9 @@ class DownloadTask(Task):
 
         Path.mkdir(submissions_dir, parents=True, exist_ok=True)
         match submission.attachments:
-            case [Attachment() as attachment]:
-                submission_path = submissions_dir / (
-                    student_name + "_" + attachment.name
+            case [CanvasAttachment() as attachment]:
+                submission_path = (
+                    submissions_dir / f"{student_name}_{attachment.filename}"
                 )
                 file_type = submission_path.suffix
                 file_contents = requests.get(attachment.url).content
@@ -155,12 +155,14 @@ class DownloadTask(Task):
                     severity="warning",
                 )
 
-    def zip_attachments(self, student_name, submissions_dir, attachments):
+    def zip_attachments(
+        self, student_name, submissions_dir, attachments: list[CanvasAttachment]
+    ):
         submission_path = submissions_dir / (student_name + "_zipped.zip")
         with ZipFile(submission_path, mode="w") as f:
             for attachment in attachments:
                 file_contents = requests.get(attachment.url).content
-                f.writestr(attachment.name, data=file_contents)
+                f.writestr(attachment.filename, data=file_contents)
 
 
 class UncompressCodeTask(Task):
