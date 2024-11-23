@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated dependencies, new Textual version.
+- Removed the 'q' shortcut. Quit is ctrl-c, or accessed through the command
+  palette.
 
 ## [1.1.1] - 2024-11-22
 

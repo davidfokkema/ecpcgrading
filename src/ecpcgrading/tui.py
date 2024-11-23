@@ -54,7 +54,6 @@ class StartupScreen(ModalScreen):
 class GradingTool(App):
     TITLE = "Grading Tool for ECPC"
     CSS_PATH = "grading_tool.tcss"
-    BINDINGS = [("q", "quit", "Quit")]
 
     config: ecpcgrading.config.Config
     canvas_tasks: CanvasTasks
