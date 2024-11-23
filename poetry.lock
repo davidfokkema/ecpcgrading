@@ -1441,13 +1441,13 @@ files = [
 
 [[package]]
 name = "textual"
-version = "0.85.2"
+version = "0.86.3"
 description = "Modern Text User Interface framework"
 optional = false
 python-versions = "<4.0.0,>=3.8.1"
 files = [
-    {file = "textual-0.85.2-py3-none-any.whl", hash = "sha256:9ccdeb6b8a6a0ff72d497f714934f2e524f2eb67783b459fb08b1339ee537dc0"},
-    {file = "textual-0.85.2.tar.gz", hash = "sha256:2a416995c49d5381a81d0a6fd23925cb0e3f14b4f239ed05f35fa3c981bb1df2"},
+    {file = "textual-0.86.3-py3-none-any.whl", hash = "sha256:ffe85bc749de7d71e0e048af301b6027abfca8942263ffb680620261cd1baa6f"},
+    {file = "textual-0.86.3.tar.gz", hash = "sha256:3c4d68612243af351e8b2d3dabe44d3cf87624624d7ea657f4d718853206188f"},
 ]
 
 [package.dependencies]
@@ -1461,20 +1461,20 @@ syntax = ["tree-sitter (>=0.20.1,<0.21.0)", "tree-sitter-languages (==1.10.2)"]
 
 [[package]]
 name = "textual-dev"
-version = "1.6.1"
+version = "1.7.0"
 description = "Development tools for working with Textual"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0.0,>=3.8.1"
 files = [
-    {file = "textual_dev-1.6.1-py3-none-any.whl", hash = "sha256:de93279da6dd0772be88a83e494be1bc895df0a0c3e47bcd48fa1acb1a83a34b"},
-    {file = "textual_dev-1.6.1.tar.gz", hash = "sha256:0d0d4523a09566bae56eb9ebc4fcbb09069d0f335448e6b9b10dd2d805606bd8"},
+    {file = "textual_dev-1.7.0-py3-none-any.whl", hash = "sha256:a93a846aeb6a06edb7808504d9c301565f7f4bf2e7046d56583ed755af356c8d"},
+    {file = "textual_dev-1.7.0.tar.gz", hash = "sha256:bf1a50eaaff4cd6a863535dd53f06dbbd62617c371604f66f56de3908220ccd5"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.1"
 click = ">=8.1.2"
 msgpack = ">=1.0.3"
-textual = ">=0.36.0"
+textual = ">=0.86.2"
 textual_serve = ">=1.0.3"
 typing-extensions = ">=4.4.0,<5.0.0"
 
@@ -1707,4 +1707,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "f69b61b75b6c93451f638d1aa2fb750456811ce15352690d0cad367ed448b7aa"
+content-hash = "32608205f9476946d8a16c3196af136c689eac1c02e7743742d54b6efdc78811"
