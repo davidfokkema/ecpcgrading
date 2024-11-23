@@ -5,16 +5,20 @@ Task>Label {
     text-align: center;
 }
 
-Student {
-    padding: 1;
+Student > Horizontal {
+    layers: bottom top;
     width: 100%;
-    align: center top;
-    & Horizontal {
-        width: auto;
+    height: auto;
+    align: center middle;
+    padding: 1;
     
-        & Label {
-            margin: 0 4;
-        }
+    & Label {
+        margin: 0 4;
+    }
+
+    & #submission_info {
+        layer: top;
+        dock: right;
     }
 }
 
