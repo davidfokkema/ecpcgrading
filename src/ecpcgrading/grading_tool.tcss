@@ -69,7 +69,7 @@ StartupScreen, RunTaskModal, TaskErrorModal {
 #modal_dialog {
     height: auto;
     width: 60%;
-    border: hkey $secondary;
+    border: hkey $accent;
     background: $panel;
 }
 
