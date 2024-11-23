@@ -10,6 +10,7 @@ from textual import on, work
 from textual.app import App, ComposeResult
 from textual.command import Hit, Hits, Provider
 from textual.containers import Horizontal
+from textual.css.query import NoMatches
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
 
@@ -88,7 +89,7 @@ class StudentsScreen(Screen):
     @work(thread=True)
     def load_submission_info(self) -> None:
         for student in self.query(Student):
-            submission: Submission = self.app.canvas_tasks.get_submissions(
+            submission: CanvasSubmission = self.app.canvas_tasks.get_submissions(
                 self.assignment._assignment, student._student
             )
             if submission.attempt is None:
@@ -102,8 +103,15 @@ class StudentsScreen(Screen):
                 status = f"[italic bold orange1]({humanize.naturaldelta(submission.attempts[-1].seconds_late)})"
             else:
                 status = f"[italic bold red]({humanize.naturaldelta(submission.attempts[-1].seconds_late)})"
-            info_widget = student.query_one("#submission_info")
-            self.app.call_from_thread(info_widget.update, status)
+
+            try:
+                info_widget = student.query_one("#submission_info")
+            except NoMatches:
+                # may happen when the user dismisses the student view but the
+                # worker is not yet fully cancelled
+                pass
+            else:
+                self.app.call_from_thread(info_widget.update, status)
 
     @on(Button.Pressed, "#back")
     def action_go_back(self) -> None:
