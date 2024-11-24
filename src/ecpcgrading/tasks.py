@@ -18,6 +18,7 @@ from textual import on, work
 from textual.app import ComposeResult, log
 from textual.binding import Binding
 from textual.containers import Center, Horizontal, Vertical
+from textual.events import Key
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
@@ -221,12 +222,12 @@ class UncompressCodeTask(Task):
 
 
 class CreateEnvTask(Task):
-    run_msg = "Creating Conda environment..."
     success_msg = "Conda environment successfully created"
     error_msg = "Environment creation failed"
 
     def __init__(self, title: str, env: EnvironmentConfig, *args, **kwargs) -> None:
         super().__init__(title, *args, **kwargs)
+        self.run_msg = f"Creating Conda environment ({env.name})..."
         self.env = env
 
     @work(thread=True, exit_on_error=False)
@@ -344,7 +345,7 @@ class Tasks(ListView):
         )
         for idx, env in enumerate(self.app.config.env.values()):
             yield CreateEnvTask(
-                f"Create conda environment: {env.name}",
+                f"Create conda environment: {env.name} [dim]\[{idx}]",
                 env=env,
                 id=f"create_env{idx}_task",
             )
@@ -362,6 +363,17 @@ class Tasks(ListView):
             # any error is handled by the task
             pass
         return worker
+
+    async def on_key(self, event: Key) -> None:
+        try:
+            # was key 0-9 pressed?
+            idx = int(event.key)
+        except ValueError:
+            pass
+        else:
+            if idx < len(self.app.config.env):
+                # check idx bound for number of environment entries
+                await self.run_task(f"#create_env{idx}_task")
 
     async def action_download(self) -> None:
         await self.run_task("#download_task")
