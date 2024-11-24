@@ -16,6 +16,7 @@ from canvas_course_tools.datatypes import Student as CanvasStudent
 from slugify import slugify
 from textual import on, work
 from textual.app import ComposeResult, log
+from textual.binding import Binding
 from textual.containers import Center, Horizontal, Vertical
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
@@ -324,15 +325,22 @@ def remove_readonly(func, path, excinfo):
 class Tasks(ListView):
     app: "GradingTool"
 
+    BINDINGS = [
+        Binding("d", "download", show=False),
+        Binding("e", "extract_submission", show=False),
+        Binding("o", "open_vscode", show=False),
+        ("s", "speedrun", "Speedrun"),
+    ]
+
     def __init__(self, assignment: Assignment, student: Student) -> None:
         super().__init__()
         self.assignment = assignment
         self.student = student
 
     def compose(self) -> ComposeResult:
-        yield DownloadTask("Download Submission", id="download_task")
+        yield DownloadTask("Download Submission [dim]\[d]", id="download_task")
         yield UncompressCodeTask(
-            "Extract submission into grading folder", id="extract_task"
+            "Extract submission into grading folder [dim]\[e]", id="extract_task"
         )
         for idx, env in enumerate(self.app.config.env.values()):
             yield CreateEnvTask(
@@ -340,18 +348,47 @@ class Tasks(ListView):
                 env=env,
                 id=f"create_env{idx}_task",
             )
-        yield OpenCodeTask("Open Visual Studio Code", id="open_vscode_task")
+        yield OpenCodeTask("Open Visual Studio Code [dim]\[o]", id="open_vscode_task")
 
     @on(ListView.Selected)
     def execute_task(self, selected: ListView.Selected) -> None:
         selected.item.execute(self.assignment, self.student)
 
+    async def action_download(self) -> None:
+        await (
+            self.query_one("#download_task")
+            .execute(self.assignment, self.student)
+            .wait()
+        )
+
+    async def action_extract_submission(self) -> None:
+        await (
+            self.query_one("#extract_task")
+            .execute(self.assignment, self.student)
+            .wait()
+        )
+
+    async def action_open_vscode(self) -> None:
+        await (
+            self.query_one("#open_vscode_task")
+            .execute(self.assignment, self.student)
+            .wait()
+        )
+
+    async def action_speedrun(self) -> None:
+        for task_id in ["#download_task", "#extract_task", "#create_env0_task"]:
+            task: Task = self.query_one(task_id)
+            worker = task.execute(self.assignment, self.student)
+            try:
+                await worker.wait()
+            except WorkerFailed:
+                # abort the speedrun, error is already handled by worker
+                break
+
 
 class TasksScreen(Screen):
     BINDINGS = [
         ("b", "go_back", "Back to Students"),
-        ("s", "speedrun", "Speedrun"),
-        ("o", "open_vscode", "Open VS Code"),
     ]
 
     def __init__(self, assignment: Assignment, student: Student) -> None:
@@ -378,16 +415,3 @@ class TasksScreen(Screen):
     @on(Button.Pressed, "#back")
     def action_go_back(self) -> None:
         self.dismiss()
-
-    async def action_speedrun(self) -> None:
-        for task_id in ["#download_task", "#extract_task", "#create_env0_task"]:
-            task: Task = self.query_one(task_id)
-            worker = task.execute(self.assignment, self.student)
-            try:
-                await worker.wait()
-            except WorkerFailed:
-                # abort the speedrun, error is already handled by worker
-                break
-
-    def action_open_vscode(self) -> None:
-        self.query_one("#open_vscode_task").execute(self.assignment, self.student)
