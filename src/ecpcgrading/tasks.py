@@ -354,35 +354,34 @@ class Tasks(ListView):
     def execute_task(self, selected: ListView.Selected) -> None:
         selected.item.execute(self.assignment, self.student)
 
+    async def run_task(self, task_id) -> None:
+        worker = self.query_one(task_id, Task).execute(self.assignment, self.student)
+        try:
+            await worker.wait()
+        except WorkerFailed:
+            # any error is handled by the task
+            pass
+        return worker
+
     async def action_download(self) -> None:
-        await (
-            self.query_one("#download_task")
-            .execute(self.assignment, self.student)
-            .wait()
-        )
+        await self.run_task("#download_task")
 
     async def action_extract_submission(self) -> None:
-        await (
-            self.query_one("#extract_task")
-            .execute(self.assignment, self.student)
-            .wait()
-        )
+        await self.run_task("#extract_task")
 
     async def action_open_vscode(self) -> None:
-        await (
-            self.query_one("#open_vscode_task")
-            .execute(self.assignment, self.student)
-            .wait()
-        )
+        await self.run_task("#open_vscode_task")
 
     async def action_speedrun(self) -> None:
-        for task_id in ["#download_task", "#extract_task", "#create_env0_task"]:
-            task: Task = self.query_one(task_id)
-            worker = task.execute(self.assignment, self.student)
-            try:
-                await worker.wait()
-            except WorkerFailed:
-                # abort the speedrun, error is already handled by worker
+        for task_id in [
+            "#download_task",
+            "#extract_task",
+            "#create_env0_task",
+            "#open_vscode_task",
+        ]:
+            worker = await self.run_task(task_id)
+            if worker.error:
+                # there was an error, abort speedrun
                 break
 
 
