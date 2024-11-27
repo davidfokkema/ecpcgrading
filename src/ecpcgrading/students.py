@@ -31,6 +31,7 @@ class Student(ListItem):
     def compose(self) -> ComposeResult:
         with Horizontal():
             yield Label(self.student_name)
+            yield Label(id="grade")
             yield Label(id="submission_info")
 
 
@@ -92,26 +93,47 @@ class StudentsScreen(Screen):
             submission: CanvasSubmission = self.app.canvas_tasks.get_submissions(
                 self.assignment._assignment, student._student
             )
-            if submission.attempt is None:
-                if submission.seconds_late > 0:
-                    status = "[italic bold red](Not submitted)"
-                else:
-                    status = "[italic bold orange1](Not yet submitted)"
-            elif submission.attempts[-1].seconds_late == 0:
-                status = "[italic bold green](On time)"
-            elif submission.attempts[-1].seconds_late < 15 * 60:
-                status = f"[italic bold orange1]({humanize.naturaldelta(submission.attempts[-1].seconds_late)})"
-            else:
-                status = f"[italic bold red]({humanize.naturaldelta(submission.attempts[-1].seconds_late)})"
+            self.show_grade(student, submission)
+            self.show_submission_status(student, submission)
 
-            try:
-                info_widget = student.query_one("#submission_info")
-            except NoMatches:
-                # may happen when the user dismisses the student view but the
-                # worker is not yet fully cancelled
-                pass
+    def show_grade(self, student: Student, submission: CanvasSubmission) -> None:
+        match submission.grade:
+            case "Fantastisch":
+                grade = "[bold bright_white]Fantastisch ✨"
+            case "Goed":
+                grade = "[bold green]Goed ✅"
+            case "Ontoereikend":
+                grade = "[bold bright_red]Ontoereikend ❌"
+            case _:
+                grade = None
+
+        if grade:
+            widget = student.query_one("#grade")
+            self.app.call_from_thread(widget.update, f"{grade}")
+
+    def show_submission_status(
+        self, student: Student, submission: CanvasSubmission
+    ) -> None:
+        if submission.attempt is None:
+            if submission.seconds_late > 0:
+                status = "[italic bold red](Not submitted)"
             else:
-                self.app.call_from_thread(info_widget.update, status)
+                status = "[italic bold orange1](Not yet submitted)"
+        elif submission.attempts[-1].seconds_late == 0:
+            status = "[italic bold green](On time)"
+        elif submission.attempts[-1].seconds_late < 15 * 60:
+            status = f"[italic bold orange1]({humanize.naturaldelta(submission.attempts[-1].seconds_late)})"
+        else:
+            status = f"[italic bold red]({humanize.naturaldelta(submission.attempts[-1].seconds_late)})"
+
+        try:
+            info_widget = student.query_one("#submission_info")
+        except NoMatches:
+            # may happen when the user dismisses the student view but the
+            # worker is not yet fully cancelled
+            pass
+        else:
+            self.app.call_from_thread(info_widget.update, status)
 
     @on(Button.Pressed, "#back")
     def action_go_back(self) -> None:

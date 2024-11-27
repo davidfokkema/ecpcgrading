@@ -13,12 +13,16 @@ Student > Horizontal {
     padding: 1;
     
     & Label {
-        margin: 0 4;
+        width: 1fr;
+        margin: 0 2;
+    }
+
+    & #grade {
+        text-align: left;
     }
 
     & #submission_info {
-        layer: top;
-        dock: right;
+        text-align: right;
     }
 }
 

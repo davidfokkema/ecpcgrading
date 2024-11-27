@@ -15,12 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New theming support, courtesy of Textual.
+- Show grades in student view.
 
 ### Changed
 
 - Updated dependencies, new Textual version.
 - Removed the 'q' shortcut. Quit is ctrl-c, or accessed through the command
   palette.
+- Speedrun now includes the open VS Code task.
 
 ## [1.1.1] - 2024-11-22
 
