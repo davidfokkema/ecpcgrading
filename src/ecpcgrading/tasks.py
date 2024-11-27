@@ -351,7 +351,7 @@ class Tasks(ListView):
 
 class TasksScreen(Screen):
     BINDINGS = [
-        ("b", "go_back", "Back to Students"),
+        ("escape", "go_back", "Back to Students"),
         Binding("d", "download", show=False),
         Binding("e", "extract_submission", show=False),
         Binding("o", "open_vscode", show=False),

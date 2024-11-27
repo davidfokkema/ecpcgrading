@@ -99,7 +99,7 @@ class GradeStudentCommands(Provider):
 
 
 class StudentsScreen(Screen):
-    BINDINGS = [("b", "go_back", "Back to Assignments")]
+    BINDINGS = [("escape", "go_back", "Back to Assignments")]
     COMMANDS = App.COMMANDS | {GradeStudentCommands}
 
     app: GradingTool

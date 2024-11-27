@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Speedrun now includes the open VS Code task.
 - If you select the "grade student" command in the palette, highlight the
   student first and don't immediately jump to the tasks.
+- Replaced 'back' bindings with escape instead of 'b' key.
 
 ## [1.1.1] - 2024-11-22
 
