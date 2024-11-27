@@ -31,6 +31,25 @@ Student > Horizontal {
     }
 }
 
+CommentsScreen {
+    #comments {
+        border: heavy $accent;
+        margin: 2 4;
+
+        & Static {
+            margin: 1 2;
+            max-width: 80;
+
+            &.author {
+                text-style: italic;
+            }
+            &.other {
+                margin-left: 10;
+            }
+        }
+    }
+}
+
 #list_header, #course_info {
     width: 100%;
     padding-bottom: 2;

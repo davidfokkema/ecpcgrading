@@ -4,14 +4,14 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 import humanize
-from canvas_course_tools.datatypes import CanvasSubmission
+from canvas_course_tools.datatypes import CanvasComment, CanvasSubmission
 from canvas_course_tools.datatypes import Student as CanvasStudent
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.command import Hit, Hits, Provider
-from textual.containers import Horizontal
+from textual.containers import Horizontal, VerticalScroll
 from textual.css.query import NoMatches
-from textual.screen import Screen
+from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
 
 from ecpcgrading.tasks import TasksScreen
@@ -21,8 +21,34 @@ if TYPE_CHECKING:
     from ecpcgrading.tui import GradingTool
 
 
+class CommentsScreen(ModalScreen):
+    BINDINGS = [("escape", "dismiss", "Dismiss comments")]
+
+    def __init__(self, student_name: str, comments: list[CanvasComment]) -> None:
+        super().__init__()
+        self.student_name = student_name
+        self.comments = comments
+
+    def compose(self) -> ComposeResult:
+        with VerticalScroll(id="comments"):
+            for comment in self.comments:
+                content = f"[dim]On {comment.created_at.ctime()}, [not dim bold]{comment.author_name}[/] wrote:[/]\n\n"
+                content += comment.comment
+                if comment.author_name == self.student_name:
+                    classes = "author"
+                else:
+                    classes = "other"
+                yield Static(content, classes=classes)
+
+    def on_mount(self) -> None:
+        widget = self.query_one("#comments")
+        widget.border_title = "Comments"
+        widget.border_subtitle = "Escape to close"
+
+
 class Student(ListItem):
-    # status = reactive
+    submission: CanvasSubmission = None
+
     def __init__(self, student: CanvasStudent) -> None:
         super().__init__()
         self._student = student
@@ -37,6 +63,8 @@ class Student(ListItem):
 
 
 class Students(ListView):
+    BINDINGS = [("c", "show_comments", "Show comments")]
+
     def __init__(self, assignment: Assignment) -> None:
         super().__init__()
         self.assignment = assignment
@@ -44,6 +72,14 @@ class Students(ListView):
     def compose(self) -> ComposeResult:
         for student in self.app.students:
             yield Student(student)
+
+    def action_show_comments(self) -> None:
+        student: Student = self.highlighted_child
+        if student.submission:
+            if student.submission.comments:
+                self.app.push_screen(
+                    CommentsScreen(student.student_name, student.submission.comments)
+                )
 
 
 class GradeStudentCommands(Provider):
@@ -94,6 +130,9 @@ class StudentsScreen(Screen):
             submission: CanvasSubmission = self.app.canvas_tasks.get_submissions(
                 self.assignment._assignment, student._student
             )
+            student.submission = submission
+            # WIP: make student.submission reactive and move below code to
+            # student widget?
             self.show_comments_count(student, submission)
             self.show_grade(student, submission)
             self.show_submission_status(student, submission)
