@@ -51,14 +51,14 @@ class GradeStudentCommands(Provider):
 
     async def search(self, query: str) -> Hits:
         matcher = self.matcher(query)
-        for student in self.app.students:
-            command = f"grade {student.name}"
+        for student in self.screen.query_one(Students).children:
+            command = f"grade {student.student_name}"
             score = matcher.match(command)
             if score > 0:
                 yield Hit(
                     score,
                     matcher.highlight(command),
-                    partial(self.screen.show_tasks, Student(student)),
+                    partial(self.screen.highlight_student, student),
                 )
 
 
@@ -177,3 +177,8 @@ class StudentsScreen(Screen):
 
     def show_tasks(self, student: Student) -> None:
         self.app.push_screen(TasksScreen(self.assignment, student))
+
+    def highlight_student(self, student: Student) -> None:
+        students = self.query_one(Students)
+        idx = students.children.index(student)
+        students.index = idx

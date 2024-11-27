@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the 'q' shortcut. Quit is ctrl-c, or accessed through the command
   palette.
 - Speedrun now includes the open VS Code task.
+- If you select the "grade student" command in the palette, highlight the
+  student first and don't immediately jump to the tasks.
 
 ## [1.1.1] - 2024-11-22
 
