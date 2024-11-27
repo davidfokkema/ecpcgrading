@@ -31,6 +31,7 @@ class Student(ListItem):
     def compose(self) -> ComposeResult:
         with Horizontal():
             yield Label(self.student_name)
+            yield Label(id="comments")
             yield Label(id="grade")
             yield Label(id="submission_info")
 
@@ -93,23 +94,54 @@ class StudentsScreen(Screen):
             submission: CanvasSubmission = self.app.canvas_tasks.get_submissions(
                 self.assignment._assignment, student._student
             )
+            self.show_comments_count(student, submission)
             self.show_grade(student, submission)
             self.show_submission_status(student, submission)
+
+    def show_comments_count(
+        self, student: Student, submission: CanvasSubmission
+    ) -> None:
+        author_count = len(
+            [c for c in submission.comments if c.author_name == student.student_name]
+        )
+        other_count = len(submission.comments) - author_count
+        match author_count, other_count:
+            case 0, 0:
+                text = ""
+            case int(), 0:
+                text = f"📝: [bold]{author_count}"
+            case 0, int():
+                text = f"📝:   [dim](+{other_count})"
+            case int(), int():
+                text = f"📝: [bold]{author_count}[/bold] [dim](+{other_count})"
+        try:
+            widget = student.query_one("#comments")
+        except NoMatches:
+            # may happen when the user dismisses the student view but the
+            # worker is not yet fully cancelled
+            pass
+        else:
+            self.app.call_from_thread(widget.update, text)
 
     def show_grade(self, student: Student, submission: CanvasSubmission) -> None:
         match submission.grade:
             case "Fantastisch":
-                grade = "[bold bright_white]Fantastisch ✨"
+                grade_text = "[bold bright_white]Fantastisch ✨"
             case "Goed":
-                grade = "[bold green]Goed ✅"
+                grade_text = "[bold green]Goed ✅"
             case "Ontoereikend":
-                grade = "[bold bright_red]Ontoereikend ❌"
+                grade_text = "[bold bright_red]Ontoereikend ❌"
             case _:
-                grade = None
+                grade_text = ""
 
-        if grade:
+        try:
             widget = student.query_one("#grade")
-            self.app.call_from_thread(widget.update, f"{grade}")
+        except NoMatches:
+            # may happen when the user dismisses the student view but the
+            # worker is not yet fully cancelled
+            pass
+        else:
+            self.app.call_from_thread(widget.update, grade_text)
 
     def show_submission_status(
         self, student: Student, submission: CanvasSubmission

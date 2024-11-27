@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - New theming support, courtesy of Textual.
 - Show grades in student view.
+- Show number of submission comments in student view.
 
 ### Changed
 

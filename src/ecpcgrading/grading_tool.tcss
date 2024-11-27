@@ -17,6 +17,11 @@ Student > Horizontal {
         margin: 0 2;
     }
 
+    & #comments {
+        width: 10;
+        margin: 0 2;
+    }
+
     & #grade {
         text-align: left;
     }
