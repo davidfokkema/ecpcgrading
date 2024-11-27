@@ -326,13 +326,6 @@ def remove_readonly(func, path, excinfo):
 class Tasks(ListView):
     app: "GradingTool"
 
-    BINDINGS = [
-        Binding("d", "download", show=False),
-        Binding("e", "extract_submission", show=False),
-        Binding("o", "open_vscode", show=False),
-        ("s", "speedrun", "Speedrun"),
-    ]
-
     def __init__(self, assignment: Assignment, student: Student) -> None:
         super().__init__()
         self.assignment = assignment
@@ -355,51 +348,14 @@ class Tasks(ListView):
     def execute_task(self, selected: ListView.Selected) -> None:
         selected.item.execute(self.assignment, self.student)
 
-    async def run_task(self, task_id) -> None:
-        worker = self.query_one(task_id, Task).execute(self.assignment, self.student)
-        try:
-            await worker.wait()
-        except WorkerFailed:
-            # any error is handled by the task
-            pass
-        return worker
-
-    async def on_key(self, event: Key) -> None:
-        try:
-            # was key 0-9 pressed?
-            idx = int(event.key)
-        except ValueError:
-            pass
-        else:
-            if idx < len(self.app.config.env):
-                # check idx bound for number of environment entries
-                await self.run_task(f"#create_env{idx}_task")
-
-    async def action_download(self) -> None:
-        await self.run_task("#download_task")
-
-    async def action_extract_submission(self) -> None:
-        await self.run_task("#extract_task")
-
-    async def action_open_vscode(self) -> None:
-        await self.run_task("#open_vscode_task")
-
-    async def action_speedrun(self) -> None:
-        for task_id in [
-            "#download_task",
-            "#extract_task",
-            "#create_env0_task",
-            "#open_vscode_task",
-        ]:
-            worker = await self.run_task(task_id)
-            if worker.error:
-                # there was an error, abort speedrun
-                break
-
 
 class TasksScreen(Screen):
     BINDINGS = [
         ("b", "go_back", "Back to Students"),
+        Binding("d", "download", show=False),
+        Binding("e", "extract_submission", show=False),
+        Binding("o", "open_vscode", show=False),
+        ("s", "speedrun", "Speedrun"),
     ]
 
     def __init__(self, assignment: Assignment, student: Student) -> None:
@@ -426,3 +382,54 @@ class TasksScreen(Screen):
     @on(Button.Pressed, "#back")
     def action_go_back(self) -> None:
         self.dismiss()
+
+    def run_task(self, task_id) -> None:
+        self.query_one(task_id, Task).execute(self.assignment, self.student)
+
+    async def run_task_wait(self, task_id) -> None:
+        # WIP: Nice idea, but blocking the event queue results in behavior that
+        # depends on whether it is blocked in the action, or the on_key method.
+        # Sometimes the keys are queued for this screen, sometimes they are
+        # dumped on the modal, it all depends. And when an error occurs the keys
+        # can get dumped in that new error dialog. So this is not very useful
+        # for quickly typing several shortcuts and have that result in a queue
+        # of tasks to perform. Leaving this for now.
+        worker = self.query_one(task_id, Task).execute(self.assignment, self.student)
+        try:
+            await worker.wait()
+        except WorkerFailed:
+            # any error is handled by the task
+            pass
+        return worker
+
+    def on_key(self, event: Key) -> None:
+        try:
+            # was key 0-9 pressed?
+            idx = int(event.key)
+        except ValueError:
+            pass
+        else:
+            if idx < len(self.app.config.env):
+                # check idx bound for number of environment entries
+                self.run_task(f"#create_env{idx}_task")
+
+    async def action_download(self) -> None:
+        await self.run_task_wait("#download_task")
+
+    async def action_extract_submission(self) -> None:
+        await self.run_task_wait("#extract_task")
+
+    async def action_open_vscode(self) -> None:
+        await self.run_task_wait("#open_vscode_task")
+
+    async def action_speedrun(self) -> None:
+        for task_id in [
+            "#download_task",
+            "#extract_task",
+            "#create_env0_task",
+            "#open_vscode_task",
+        ]:
+            worker = await self.run_task_wait(task_id)
+            if worker.error:
+                # there was an error, abort speedrun
+                break
