@@ -12,10 +12,10 @@ from textual import on, work
 from textual.app import App, ComposeResult
 from textual.command import Hit, Hits, Provider
 from textual.containers import Horizontal, VerticalScroll
-from textual.events import Click
 from textual.reactive import reactive
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
+from textual.worker import Worker, get_current_worker
 
 from ecpcgrading.tasks import TasksScreen
 
@@ -186,6 +186,7 @@ class StudentsScreen(Screen):
     @work(thread=True)
     def load_submission_info(self) -> None:
         t0 = time.time()
+        worker = get_current_worker()
         students = list(self.query(Student))
         batch_size, remainder = divmod(len(students), CANVAS_POOL_SIZE)
         if remainder:
@@ -195,7 +196,7 @@ class StudentsScreen(Screen):
             batch = students[idx : idx + batch_size]
             thread = threading.Thread(
                 target=self.load_submission_info_task,
-                kwargs=dict(assignment=self.assignment, students=batch),
+                kwargs=dict(assignment=self.assignment, students=batch, worker=worker),
             )
             threads.append(thread)
             thread.start()
@@ -204,13 +205,15 @@ class StudentsScreen(Screen):
         self.notify(f"Loaded submissions in {time.time() - t0:.1f} s.")
 
     def load_submission_info_task(
-        self, assignment: Assignment, students: list[Student]
+        self, assignment: Assignment, students: list[Student], worker: Worker
     ) -> None:
         for student in students:
-            submission: CanvasSubmission = self.app.canvas_tasks.get_submissions(
-                assignment._assignment, student._student
-            )
-            student.submission = submission
+            if not worker.is_cancelled:
+                submission: CanvasSubmission = self.app.canvas_tasks.get_submissions(
+                    assignment._assignment, student._student
+                )
+            if not worker.is_cancelled:
+                student.submission = submission
 
     @on(Button.Pressed, "#back")
     def action_go_back(self) -> None:
