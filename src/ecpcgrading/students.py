@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import threading
+import time
 from functools import partial
 from typing import TYPE_CHECKING
 
@@ -10,7 +12,6 @@ from textual import on, work
 from textual.app import App, ComposeResult
 from textual.command import Hit, Hits, Provider
 from textual.containers import Horizontal, VerticalScroll
-from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
@@ -20,6 +21,8 @@ from ecpcgrading.tasks import TasksScreen
 if TYPE_CHECKING:
     from ecpcgrading.assignments import Assignment
     from ecpcgrading.tui import GradingTool
+
+CANVAS_POOL_SIZE = 8
 
 
 class CommentsScreen(ModalScreen):
@@ -175,9 +178,30 @@ class StudentsScreen(Screen):
 
     @work(thread=True)
     def load_submission_info(self) -> None:
-        for student in self.query(Student):
+        t0 = time.time()
+        students = list(self.query(Student))
+        batch_size, remainder = divmod(len(students), CANVAS_POOL_SIZE)
+        if remainder:
+            batch_size += 1
+        threads = []
+        for idx in range(0, len(students), batch_size):
+            batch = students[idx : idx + batch_size]
+            thread = threading.Thread(
+                target=self.load_submission_info_task,
+                kwargs=dict(assignment=self.assignment, students=batch),
+            )
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.notify(f"Loaded submissions in {time.time() - t0:.1f} s.")
+
+    def load_submission_info_task(
+        self, assignment: Assignment, students: list[Student]
+    ) -> None:
+        for student in students:
             submission: CanvasSubmission = self.app.canvas_tasks.get_submissions(
-                self.assignment._assignment, student._student
+                assignment._assignment, student._student
             )
             student.submission = submission
 

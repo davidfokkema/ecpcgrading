@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Config setting "theme" to choose your preferred theme.
+- Request submission status with multiple parallel requests, making it faster.
 
 ### Changed
 
