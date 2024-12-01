@@ -68,6 +68,7 @@ class GradingTool(App):
         except FileNotFoundError:
             print("No grading.toml file found. Are you in the correct folder?")
             self.exit()
+        self.theme = self.config.theme
 
     def on_mount(self) -> None:
         def callback(result):

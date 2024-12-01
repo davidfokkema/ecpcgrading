@@ -24,6 +24,7 @@ class Config(BaseModel):
     groupset: str | None = None
     group: str | None = None
     env: dict[str, EnvironmentConfig]
+    theme: str = "textual-dark"
 
 
 def read_config(folder: Path):
