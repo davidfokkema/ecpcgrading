@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Config setting "theme" to choose your preferred theme.
 
+### Changed
+
+- Speedrun no longer opens VS Code automatically. This one's for you, Pim!
+
 ## [1.2.0] - 2024-11-27
 
 ### Fixed

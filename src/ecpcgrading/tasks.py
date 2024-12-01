@@ -427,7 +427,6 @@ class TasksScreen(Screen):
             "#download_task",
             "#extract_task",
             "#create_env0_task",
-            "#open_vscode_task",
         ]:
             worker = await self.run_task_wait(task_id)
             if worker.error:
