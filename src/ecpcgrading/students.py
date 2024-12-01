@@ -11,6 +11,7 @@ from textual.app import App, ComposeResult
 from textual.command import Hit, Hits, Provider
 from textual.containers import Horizontal, VerticalScroll
 from textual.css.query import NoMatches
+from textual.reactive import reactive
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
 
@@ -47,7 +48,7 @@ class CommentsScreen(ModalScreen):
 
 
 class Student(ListItem):
-    submission: CanvasSubmission = None
+    submission: reactive[CanvasSubmission | None] = reactive(None)
 
     def __init__(self, student: CanvasStudent) -> None:
         super().__init__()
@@ -59,7 +60,55 @@ class Student(ListItem):
             yield Label(self.student_name)
             yield Label(id="comments")
             yield Label(id="grade")
-            yield Label(id="submission_info")
+            yield Label(id="status")
+
+    def watch_submission(self) -> None:
+        if self.submission:
+            self.show_comments_count()
+            self.show_grade()
+            self.show_submission_status()
+
+    def show_comments_count(self) -> None:
+        author_count = len(
+            [c for c in self.submission.comments if c.author_name == self.student_name]
+        )
+        other_count = len(self.submission.comments) - author_count
+        match author_count, other_count:
+            case 0, 0:
+                text = ""
+            case int(), 0:
+                text = f"📝: [bold]{author_count}"
+            case 0, int():
+                text = f"📝:   [dim](+{other_count})"
+            case int(), int():
+                text = f"📝: [bold]{author_count}[/bold] [dim](+{other_count})"
+        self.query_one("#comments", Label).update(text)
+
+    def show_grade(self) -> None:
+        match self.submission.grade:
+            case "Fantastisch":
+                text = "[bold bright_white]Fantastisch ✨"
+            case "Goed":
+                text = "[bold green]Goed ✅"
+            case "Ontoereikend":
+                text = "[bold bright_red]Ontoereikend ❌"
+            case _:
+                text = ""
+        self.query_one("#grade", Label).update(text)
+
+    def show_submission_status(self) -> None:
+        if self.submission.attempt is None:
+            if self.submission.seconds_late > 0:
+                text = "[italic bold red](Not submitted)"
+            else:
+                text = "[italic bold orange1](Not yet submitted)"
+        elif self.submission.attempts[-1].seconds_late == 0:
+            text = "[italic bold green](On time)"
+        elif self.submission.attempts[-1].seconds_late < 15 * 60:
+            text = f"[italic bold orange1]({humanize.naturaldelta(self.submission.attempts[-1].seconds_late)})"
+        else:
+            text = f"[italic bold red]({humanize.naturaldelta(self.submission.attempts[-1].seconds_late)})"
+        self.query_one("#status", Label).update(text)
 
 
 class Students(ListView):
@@ -131,80 +180,6 @@ class StudentsScreen(Screen):
                 self.assignment._assignment, student._student
             )
             student.submission = submission
-            # WIP: make student.submission reactive and move below code to
-            # student widget?
-            self.show_comments_count(student, submission)
-            self.show_grade(student, submission)
-            self.show_submission_status(student, submission)
-
-    def show_comments_count(
-        self, student: Student, submission: CanvasSubmission
-    ) -> None:
-        author_count = len(
-            [c for c in submission.comments if c.author_name == student.student_name]
-        )
-        other_count = len(submission.comments) - author_count
-        match author_count, other_count:
-            case 0, 0:
-                text = ""
-            case int(), 0:
-                text = f"📝: [bold]{author_count}"
-            case 0, int():
-                text = f"📝:   [dim](+{other_count})"
-            case int(), int():
-                text = f"📝: [bold]{author_count}[/bold] [dim](+{other_count})"
-        try:
-            widget = student.query_one("#comments")
-        except NoMatches:
-            # may happen when the user dismisses the student view but the
-            # worker is not yet fully cancelled
-            pass
-        else:
-            self.app.call_from_thread(widget.update, text)
-
-    def show_grade(self, student: Student, submission: CanvasSubmission) -> None:
-        match submission.grade:
-            case "Fantastisch":
-                grade_text = "[bold bright_white]Fantastisch ✨"
-            case "Goed":
-                grade_text = "[bold green]Goed ✅"
-            case "Ontoereikend":
-                grade_text = "[bold bright_red]Ontoereikend ❌"
-            case _:
-                grade_text = ""
-
-        try:
-            widget = student.query_one("#grade")
-        except NoMatches:
-            # may happen when the user dismisses the student view but the
-            # worker is not yet fully cancelled
-            pass
-        else:
-            self.app.call_from_thread(widget.update, grade_text)
-
-    def show_submission_status(
-        self, student: Student, submission: CanvasSubmission
-    ) -> None:
-        if submission.attempt is None:
-            if submission.seconds_late > 0:
-                status = "[italic bold red](Not submitted)"
-            else:
-                status = "[italic bold orange1](Not yet submitted)"
-        elif submission.attempts[-1].seconds_late == 0:
-            status = "[italic bold green](On time)"
-        elif submission.attempts[-1].seconds_late < 15 * 60:
-            status = f"[italic bold orange1]({humanize.naturaldelta(submission.attempts[-1].seconds_late)})"
-        else:
-            status = f"[italic bold red]({humanize.naturaldelta(submission.attempts[-1].seconds_late)})"
-
-        try:
-            info_widget = student.query_one("#submission_info")
-        except NoMatches:
-            # may happen when the user dismisses the student view but the
-            # worker is not yet fully cancelled
-            pass
-        else:
-            self.app.call_from_thread(info_widget.update, status)
 
     @on(Button.Pressed, "#back")
     def action_go_back(self) -> None:
