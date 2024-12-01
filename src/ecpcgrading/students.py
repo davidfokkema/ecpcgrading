@@ -12,6 +12,7 @@ from textual import on, work
 from textual.app import App, ComposeResult
 from textual.command import Hit, Hits, Provider
 from textual.containers import Horizontal, VerticalScroll
+from textual.events import Click
 from textual.reactive import reactive
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static
@@ -132,6 +133,12 @@ class Students(ListView):
                 self.app.push_screen(
                     CommentsScreen(student.student_name, student.submission.comments)
                 )
+
+    def on_list_item__child_clicked(self, event: ListItem._ChildClicked) -> None:
+        if self.index != (clicked_index := self._nodes.index(event.item)):
+            event.prevent_default()
+            event.stop()
+            self.index = clicked_index
 
 
 class GradeStudentCommands(Provider):

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Speedrun no longer opens VS Code automatically. This one's for you, Pim!
+- Clicking on a student in the student list will first only highlight the student and select them with a second click.
 
 ## [1.2.0] - 2024-11-27
 
