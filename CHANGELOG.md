@@ -5,17 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2024-12-04
+
+### Fixed
+
+- Fix css so "not yet submitted" does not increase height of student widget.
+
 ## [1.3.0] - 2024-12-01
 
 ### Added
 
 - Config setting "theme" to choose your preferred theme.
-- Request submission status with multiple parallel requests, making it much faster.
+- Request submission status with multiple parallel requests, making it much
+  faster.
 
 ### Changed
 
 - Speedrun no longer opens VS Code automatically. This one's for you, Pim!
-- Clicking on a student in the student list will first only highlight the student and with a second click select them.
+- Clicking on a student in the student list will first only highlight the
+  student and with a second click select them.
 
 ## [1.2.0] - 2024-11-27
 
@@ -73,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Extracting submission from a .bundle no longer fails to check out main branch on Windows
+- Extracting submission from a .bundle no longer fails to check out main branch
+  on Windows
 - Workaround for environment activation problems on macOS
 - Hide git clone output from UI
 

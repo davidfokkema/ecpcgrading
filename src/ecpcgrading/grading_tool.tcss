@@ -26,7 +26,8 @@ Student > Horizontal {
         text-align: left;
     }
 
-    & #submission_info {
+    & #status {
+        width: 19;
         text-align: right;
     }
 }
