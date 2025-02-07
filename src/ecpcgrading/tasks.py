@@ -5,6 +5,7 @@ import os
 import shutil
 import stat
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 from zipfile import ZipFile
@@ -22,12 +23,14 @@ from textual.events import Key
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
+    Collapsible,
     Footer,
     Header,
     Label,
     ListItem,
     ListView,
     LoadingIndicator,
+    Log,
     Static,
 )
 from textual.worker import Worker, WorkerFailed, WorkerState
@@ -38,6 +41,12 @@ if TYPE_CHECKING:
     from ecpcgrading.assignments import Assignment
     from ecpcgrading.students import Student
     from ecpcgrading.tui import GradingTool
+
+
+@dataclass
+class TaskError(Exception):
+    msg: str
+    details: str
 
 
 class Task(ListItem):
@@ -100,7 +109,7 @@ class TaskErrorModal(ModalScreen):
     def __init__(
         self,
         msg: str,
-        exception: Exception,
+        exception: TaskError,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
@@ -111,10 +120,19 @@ class TaskErrorModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="modal_dialog"):
-            with Center():
-                yield Label(f"{self.msg}: {self.exception}", id="error_msg")
+            yield Label(f"{self.msg}: {self.exception}", id="error_msg")
+            with Collapsible(title="Detailed output"):
+                yield Log()
             with Center():
                 yield Button("Close", variant="primary")
+
+    def on_mount(self) -> None:
+        try:
+            self.query_one(Log).write(self.exception.details)
+        except AttributeError:
+            self.query_one(Collapsible).remove()
+            self.query_one("#modal_dialog").styles.height = "auto"
+        self.query_one(Button).focus()
 
     @on(Button.Pressed)
     def close_dialog(self, event: Button.Pressed) -> None:
