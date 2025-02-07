@@ -240,26 +240,34 @@ class UncompressCodeTask(Task):
 
 
 class CreateEnvTask(Task):
-    success_msg = "Conda environment successfully created"
+    success_msg = "Environment successfully created"
     error_msg = "Environment creation failed"
 
     def __init__(self, title: str, env: EnvironmentConfig, *args, **kwargs) -> None:
         super().__init__(title, *args, **kwargs)
-        self.run_msg = f"Creating Conda environment ({env.name})..."
+        self.run_msg = f"Creating environment ({env.name})..."
         self.env = env
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        env_name = "ECPC_" + slugify(self._student.name)
+        command = f"uv venv --python {self.env.python_version}"
+        if self.env.package_spec:
+            command += (
+                f" && uv pip install --python .venv/bin/python {self.env.package_spec}"
+            )
         process = subprocess.run(
-            f"conda create -n {env_name} -c {self.env.channel} {self.env.package_spec} --yes",
+            command,
+            cwd=get_code_dir(self.app.config, self._assignment, self._student),
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        self.log(process.stdout.decode())
+        output = process.stdout.decode()
+        self.log(output)
         if process.returncode:
-            raise RuntimeError(f"Process exited with exit code: {process.returncode}")
+            raise TaskError(
+                f"Process exited with exit code: {process.returncode}", details=output
+            )
         self.app.call_from_thread(self.notify, "Created clean conda environment")
 
 
@@ -270,44 +278,13 @@ class OpenCodeTask(Task):
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        config = self.app.config
-        assignment = slugify(self._assignment.name)
-        student_name = slugify(self._student.name)
-        env_name = "ECPC_" + slugify(self._student.name)
-        code_dir = config.root_path / assignment / config.code_path / student_name
+        code_dir = get_code_dir(self.app.config, self._assignment, self._student)
+        if not code_dir.exists():
+            raise RuntimeError("Please download and extract submission first.")
 
-        dir_contents: Path = list(code_dir.iterdir())
-        if len(dir_contents) == 1 and dir_contents[0].is_dir():
-            code_dir = dir_contents[0]
-
-        # A bug in VS Code on macOS breaks environment activation.
-        # Ref: https://github.com/microsoft/vscode-python/issues/23571
-        #
-        # process = subprocess.run(
-        #     f'conda run -n {env_name} code "{code_dir}"',
-        #     shell=True,
-        #     stdout=subprocess.PIPE,
-        #     stderr=subprocess.STDOUT,
-        # )
-        # self.log(process.stdout.decode())
-        # if process.returncode:
-        #     raise RuntimeError(f"Process exited with exit code: {process.returncode}")
-
-        # find the student environment's Python interpreter
-        process = subprocess.run(
-            f'conda run -n {env_name} python -c "import sys; print(sys.executable)"',
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        if process.returncode:
-            raise RuntimeError(f"Process exited with exit code: {process.returncode}")
-
-        # write a .vscode/settings.json with that interpreter selected
-        python_path = process.stdout.decode().strip()
         (settings_dir := code_dir / ".vscode").mkdir(parents=True, exist_ok=True)
         (settings_dir / "settings.json").write_text(
-            json.dumps({"python.defaultInterpreterPath": python_path})
+            json.dumps({"python.defaultInterpreterPath": ".venv/bin/python"})
         )
 
         # start VS Code

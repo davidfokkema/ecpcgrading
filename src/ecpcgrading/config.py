@@ -10,8 +10,8 @@ from pydantic import BaseModel
 
 class EnvironmentConfig(BaseModel):
     name: str
-    channel: str = "defaults"
-    package_spec: str = "python"
+    python_version: str = "3.12"
+    package_spec: str = ""
 
 
 class Config(BaseModel):
