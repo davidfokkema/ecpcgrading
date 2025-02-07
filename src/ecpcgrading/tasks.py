@@ -268,7 +268,7 @@ class CreateEnvTask(Task):
             raise TaskError(
                 f"Process exited with exit code: {process.returncode}", details=output
             )
-        self.app.call_from_thread(self.notify, "Created clean conda environment")
+        self.app.call_from_thread(self.notify, "Created clean environment")
 
 
 class OpenCodeTask(Task):
@@ -333,7 +333,7 @@ class Tasks(ListView):
         )
         for idx, env in enumerate(self.app.config.env.values()):
             yield CreateEnvTask(
-                f"Create conda environment: {env.name} [dim]\[{idx}]",
+                f"Create virtual environment: {env.name} [dim]\[{idx}]",
                 env=env,
                 id=f"create_env{idx}_task",
             )
