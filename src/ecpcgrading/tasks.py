@@ -185,7 +185,7 @@ class DownloadTask(Task):
                 f.writestr(attachment.filename, data=file_contents)
 
 
-class UncompressCodeTask(Task):
+class DecompressCodeTask(Task):
     run_msg = "Extracting files..."
     success_msg = "Code successfully decompressed"
     error_msg = "Decompression failed"
@@ -221,8 +221,9 @@ class UncompressCodeTask(Task):
                         )
                         self.log(process.stdout.decode())
                         if process.returncode:
-                            raise RuntimeError(
-                                f"Process exited with exit code: {process.returncode}"
+                            raise TaskError(
+                                f"Process exited with exit code: {process.returncode}",
+                                details=process.stdout.decode(),
                             )
                         self.app.call_from_thread(
                             self.notify, "Cloned submitted repository"
@@ -346,7 +347,7 @@ class Tasks(ListView):
 
     def compose(self) -> ComposeResult:
         yield DownloadTask("Download Submission [dim]\[d]", id="download_task")
-        yield UncompressCodeTask(
+        yield DecompressCodeTask(
             "Extract submission into grading folder [dim]\[e]", id="extract_task"
         )
         for idx, env in enumerate(self.app.config.env.values()):
