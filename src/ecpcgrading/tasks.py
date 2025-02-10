@@ -290,6 +290,7 @@ class OpenCodeTask(Task):
         (settings_dir / "settings.json").write_text(
             json.dumps({"python.defaultInterpreterPath": ".venv/bin/python"})
         )
+        (settings_dir / ".gitignore").write_text("*")
 
         # start VS Code
         process = subprocess.run(
