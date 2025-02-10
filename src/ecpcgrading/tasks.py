@@ -257,7 +257,9 @@ class CreateEnvTask(Task):
             )
         process = subprocess.run(
             command,
-            cwd=get_code_dir(self.app.config, self._assignment, self._student),
+            cwd=get_code_dir(
+                self.app.config, self._assignment, self._student, check_subdir=True
+            ),
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -278,7 +280,9 @@ class OpenCodeTask(Task):
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        code_dir = get_code_dir(self.app.config, self._assignment, self._student)
+        code_dir = get_code_dir(
+            self.app.config, self._assignment, self._student, check_subdir=True
+        )
         if not code_dir.exists():
             raise RuntimeError("Please download and extract submission first.")
 
@@ -303,13 +307,26 @@ def get_submissions_dir(config: Config, assignment: CanvasAssignment):
     return config.root_path / slugify(assignment.name) / config.submissions_path
 
 
-def get_code_dir(config: Config, assignment: CanvasAssignment, student: CanvasStudent):
-    return (
+def get_code_dir(
+    config: Config,
+    assignment: CanvasAssignment,
+    student: CanvasStudent,
+    check_subdir: bool = False,
+) -> Path:
+    student_dir = (
         config.root_path
         / slugify(assignment.name)
         / config.code_path
         / slugify(student.name)
     )
+
+    if check_subdir and student_dir.exists():
+        dir_contents: Path = list(student_dir.iterdir())
+        if len(dir_contents) == 1 and dir_contents[0].is_dir():
+            # student submitted a directory containing all the files, use that
+            # directory as code dir
+            return dir_contents[0]
+    return student_dir
 
 
 def remove_readonly(func, path, excinfo):
