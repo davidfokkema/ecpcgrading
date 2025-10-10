@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-10-10
+
+### Added
+
+- Added details for task errors.
+
+### Changed
+
+- Project is now managed using uv.
+- Use uv instead of conda for creating virtual environments.
+- A speedrun will also open Visual Studio Code.
+- If a student submits a directory, use that as the code directory.
+
 ## [1.3.1] - 2024-12-04
 
 ### Fixed
