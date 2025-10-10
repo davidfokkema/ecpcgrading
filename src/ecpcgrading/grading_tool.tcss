@@ -90,8 +90,26 @@ AssignmentsScreen > #list_header {
     margin: 0;
 }
 
-StartupScreen, RunTaskModal, TaskErrorModal {
+StartupScreen, RunTaskModal {
     align: center middle;
+}
+
+TaskErrorModal {
+    align: center middle;
+
+    #modal_dialog {
+        width: 90%;
+        height: 90%;
+        
+        Collapsible {
+            height: 1fr;
+            margin-top: 1;
+
+            Contents {
+                height: 1fr;
+            }
+        }
+    }
 }
 
 

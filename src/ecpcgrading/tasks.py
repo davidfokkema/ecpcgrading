@@ -5,6 +5,7 @@ import os
 import shutil
 import stat
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 from zipfile import ZipFile
@@ -22,12 +23,14 @@ from textual.events import Key
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
+    Collapsible,
     Footer,
     Header,
     Label,
     ListItem,
     ListView,
     LoadingIndicator,
+    Log,
     Static,
 )
 from textual.worker import Worker, WorkerFailed, WorkerState
@@ -38,6 +41,12 @@ if TYPE_CHECKING:
     from ecpcgrading.assignments import Assignment
     from ecpcgrading.students import Student
     from ecpcgrading.tui import GradingTool
+
+
+@dataclass
+class TaskError(Exception):
+    msg: str
+    details: str
 
 
 class Task(ListItem):
@@ -100,7 +109,7 @@ class TaskErrorModal(ModalScreen):
     def __init__(
         self,
         msg: str,
-        exception: Exception,
+        exception: TaskError,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
@@ -111,10 +120,19 @@ class TaskErrorModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="modal_dialog"):
-            with Center():
-                yield Label(f"{self.msg}: {self.exception}", id="error_msg")
+            yield Label(f"{self.msg}: {self.exception}", id="error_msg")
+            with Collapsible(title="Detailed output"):
+                yield Log()
             with Center():
                 yield Button("Close", variant="primary")
+
+    def on_mount(self) -> None:
+        try:
+            self.query_one(Log).write(self.exception.details)
+        except AttributeError:
+            self.query_one(Collapsible).remove()
+            self.query_one("#modal_dialog").styles.height = "auto"
+        self.query_one(Button).focus()
 
     @on(Button.Pressed)
     def close_dialog(self, event: Button.Pressed) -> None:
@@ -167,7 +185,7 @@ class DownloadTask(Task):
                 f.writestr(attachment.filename, data=file_contents)
 
 
-class UncompressCodeTask(Task):
+class DecompressCodeTask(Task):
     run_msg = "Extracting files..."
     success_msg = "Code successfully decompressed"
     error_msg = "Decompression failed"
@@ -203,8 +221,9 @@ class UncompressCodeTask(Task):
                         )
                         self.log(process.stdout.decode())
                         if process.returncode:
-                            raise RuntimeError(
-                                f"Process exited with exit code: {process.returncode}"
+                            raise TaskError(
+                                f"Process exited with exit code: {process.returncode}",
+                                details=process.stdout.decode(),
                             )
                         self.app.call_from_thread(
                             self.notify, "Cloned submitted repository"
@@ -222,27 +241,37 @@ class UncompressCodeTask(Task):
 
 
 class CreateEnvTask(Task):
-    success_msg = "Conda environment successfully created"
+    success_msg = "Environment successfully created"
     error_msg = "Environment creation failed"
 
     def __init__(self, title: str, env: EnvironmentConfig, *args, **kwargs) -> None:
         super().__init__(title, *args, **kwargs)
-        self.run_msg = f"Creating Conda environment ({env.name})..."
+        self.run_msg = f"Creating environment ({env.name})..."
         self.env = env
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        env_name = "ECPC_" + slugify(self._student.name)
+        command = f"uv venv --python {self.env.python_version}"
+        if self.env.package_spec:
+            command += (
+                f" && uv pip install --python .venv/bin/python {self.env.package_spec}"
+            )
         process = subprocess.run(
-            f"conda create -n {env_name} -c {self.env.channel} {self.env.package_spec} --yes",
+            command,
+            cwd=get_code_dir(
+                self.app.config, self._assignment, self._student, check_subdir=True
+            ),
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        self.log(process.stdout.decode())
+        output = process.stdout.decode()
+        self.log(output)
         if process.returncode:
-            raise RuntimeError(f"Process exited with exit code: {process.returncode}")
-        self.app.call_from_thread(self.notify, "Created clean conda environment")
+            raise TaskError(
+                f"Process exited with exit code: {process.returncode}", details=output
+            )
+        self.app.call_from_thread(self.notify, "Created clean environment")
 
 
 class OpenCodeTask(Task):
@@ -252,45 +281,17 @@ class OpenCodeTask(Task):
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        config = self.app.config
-        assignment = slugify(self._assignment.name)
-        student_name = slugify(self._student.name)
-        env_name = "ECPC_" + slugify(self._student.name)
-        code_dir = config.root_path / assignment / config.code_path / student_name
-
-        dir_contents: Path = list(code_dir.iterdir())
-        if len(dir_contents) == 1 and dir_contents[0].is_dir():
-            code_dir = dir_contents[0]
-
-        # A bug in VS Code on macOS breaks environment activation.
-        # Ref: https://github.com/microsoft/vscode-python/issues/23571
-        #
-        # process = subprocess.run(
-        #     f'conda run -n {env_name} code "{code_dir}"',
-        #     shell=True,
-        #     stdout=subprocess.PIPE,
-        #     stderr=subprocess.STDOUT,
-        # )
-        # self.log(process.stdout.decode())
-        # if process.returncode:
-        #     raise RuntimeError(f"Process exited with exit code: {process.returncode}")
-
-        # find the student environment's Python interpreter
-        process = subprocess.run(
-            f'conda run -n {env_name} python -c "import sys; print(sys.executable)"',
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+        code_dir = get_code_dir(
+            self.app.config, self._assignment, self._student, check_subdir=True
         )
-        if process.returncode:
-            raise RuntimeError(f"Process exited with exit code: {process.returncode}")
+        if not code_dir.exists():
+            raise RuntimeError("Please download and extract submission first.")
 
-        # write a .vscode/settings.json with that interpreter selected
-        python_path = process.stdout.decode().strip()
         (settings_dir := code_dir / ".vscode").mkdir(parents=True, exist_ok=True)
         (settings_dir / "settings.json").write_text(
-            json.dumps({"python.defaultInterpreterPath": python_path})
+            json.dumps({"python.defaultInterpreterPath": ".venv/bin/python"})
         )
+        (settings_dir / ".gitignore").write_text("*")
 
         # start VS Code
         process = subprocess.run(
@@ -308,13 +309,26 @@ def get_submissions_dir(config: Config, assignment: CanvasAssignment):
     return config.root_path / slugify(assignment.name) / config.submissions_path
 
 
-def get_code_dir(config: Config, assignment: CanvasAssignment, student: CanvasStudent):
-    return (
+def get_code_dir(
+    config: Config,
+    assignment: CanvasAssignment,
+    student: CanvasStudent,
+    check_subdir: bool = False,
+) -> Path:
+    student_dir = (
         config.root_path
         / slugify(assignment.name)
         / config.code_path
         / slugify(student.name)
     )
+
+    if check_subdir and student_dir.exists():
+        dir_contents: Path = list(student_dir.iterdir())
+        if len(dir_contents) == 1 and dir_contents[0].is_dir():
+            # student submitted a directory containing all the files, use that
+            # directory as code dir
+            return dir_contents[0]
+    return student_dir
 
 
 def remove_readonly(func, path, excinfo):
@@ -332,17 +346,17 @@ class Tasks(ListView):
         self.student = student
 
     def compose(self) -> ComposeResult:
-        yield DownloadTask("Download Submission [dim]\[d]", id="download_task")
-        yield UncompressCodeTask(
-            "Extract submission into grading folder [dim]\[e]", id="extract_task"
+        yield DownloadTask(r"Download Submission [dim]\[d]", id="download_task")
+        yield DecompressCodeTask(
+            r"Extract submission into grading folder [dim]\[e]", id="extract_task"
         )
         for idx, env in enumerate(self.app.config.env.values()):
             yield CreateEnvTask(
-                f"Create conda environment: {env.name} [dim]\[{idx}]",
+                rf"Create virtual environment: {env.name} [dim]\[{idx}]",
                 env=env,
                 id=f"create_env{idx}_task",
             )
-        yield OpenCodeTask("Open Visual Studio Code [dim]\[o]", id="open_vscode_task")
+        yield OpenCodeTask(r"Open Visual Studio Code [dim]\[o]", id="open_vscode_task")
 
     @on(ListView.Selected)
     def execute_task(self, selected: ListView.Selected) -> None:
@@ -427,6 +441,7 @@ class TasksScreen(Screen):
             "#download_task",
             "#extract_task",
             "#create_env0_task",
+            "#open_vscode_task",
         ]:
             worker = await self.run_task_wait(task_id)
             if worker.error:
