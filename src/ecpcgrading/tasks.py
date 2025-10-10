@@ -346,17 +346,17 @@ class Tasks(ListView):
         self.student = student
 
     def compose(self) -> ComposeResult:
-        yield DownloadTask("Download Submission [dim]\[d]", id="download_task")
+        yield DownloadTask(r"Download Submission [dim]\[d]", id="download_task")
         yield DecompressCodeTask(
-            "Extract submission into grading folder [dim]\[e]", id="extract_task"
+            r"Extract submission into grading folder [dim]\[e]", id="extract_task"
         )
         for idx, env in enumerate(self.app.config.env.values()):
             yield CreateEnvTask(
-                f"Create virtual environment: {env.name} [dim]\[{idx}]",
+                rf"Create virtual environment: {env.name} [dim]\[{idx}]",
                 env=env,
                 id=f"create_env{idx}_task",
             )
-        yield OpenCodeTask("Open Visual Studio Code [dim]\[o]", id="open_vscode_task")
+        yield OpenCodeTask(r"Open Visual Studio Code [dim]\[o]", id="open_vscode_task")
 
     @on(ListView.Selected)
     def execute_task(self, selected: ListView.Selected) -> None:
