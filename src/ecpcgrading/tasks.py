@@ -288,6 +288,13 @@ class OpenCodeTask(Task):
         if not code_dir.exists():
             raise RuntimeError("Please download and extract submission first.")
 
+        env = os.environ
+        # find Python interpreter in .venv
+        for path in [Path(".venv/bin/python"), Path(".venv/Scripts/python.exe")]:
+            if path.is_file():
+                env |= {"VIRTUAL_ENV": str(path)}
+                break
+
         # start VS Code
         process = subprocess.run(
             f'code "{code_dir}"',
@@ -296,7 +303,7 @@ class OpenCodeTask(Task):
             stderr=subprocess.STDOUT,
             # make sure the .venv environment is used even when another virtual
             # environment is activated
-            env=os.environ | {"VIRTUAL_ENV": "./.venv"},
+            env=env,
         )
         self.log(process.stdout.decode())
         if process.returncode:
