@@ -251,11 +251,9 @@ class CreateEnvTask(Task):
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        command = f"uv venv --python {self.env.python_version}"
+        command = f"uv venv --python {self.env.python_version} --clear"
         if self.env.package_spec:
-            command += (
-                f" && uv pip install --python .venv/bin/python {self.env.package_spec}"
-            )
+            command += f" && uv pip install {self.env.package_spec}"
         process = subprocess.run(
             command,
             cwd=get_code_dir(
@@ -264,6 +262,9 @@ class CreateEnvTask(Task):
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            # make sure the .venv environment is used for installing packages
+            # even when another virtual environment is activated
+            env=os.environ | {"VIRTUAL_ENV": "./.venv"},
         )
         output = process.stdout.decode()
         self.log(output)
@@ -287,18 +288,15 @@ class OpenCodeTask(Task):
         if not code_dir.exists():
             raise RuntimeError("Please download and extract submission first.")
 
-        (settings_dir := code_dir / ".vscode").mkdir(parents=True, exist_ok=True)
-        (settings_dir / "settings.json").write_text(
-            json.dumps({"python.defaultInterpreterPath": ".venv/bin/python"})
-        )
-        (settings_dir / ".gitignore").write_text("*")
-
         # start VS Code
         process = subprocess.run(
             f'code "{code_dir}"',
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            # make sure the .venv environment is used even when another virtual
+            # environment is activated
+            env=os.environ | {"VIRTUAL_ENV": "./.venv"},
         )
         self.log(process.stdout.decode())
         if process.returncode:
