@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import json
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -208,22 +208,43 @@ class DecompressCodeTask(Task):
                 Path.mkdir(code_dir, parents=True)
                 match path.suffix:
                     case ".zip":
+                        # a zip file (old submission format)
                         with ZipFile(path) as f:
                             f.extractall(path=code_dir)
                         self.app.call_from_thread(
                             self.notify, "Extracted submitted files"
                         )
                     case ".bundle":
+                        # a bundle file (new submission format)
+                        # list heads (branches)
                         process = subprocess.run(
-                            ["git", "clone", "-b", "main", path, code_dir],
+                            ["git", "bundle", "list-heads", path],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
                         )
-                        self.log(process.stdout.decode())
+                        output = process.stdout.decode()
+                        self.log(output)
                         if process.returncode:
                             raise TaskError(
                                 f"Process exited with exit code: {process.returncode}",
-                                details=process.stdout.decode(),
+                                details=output,
+                            )
+                        branch = re.match("[a-z0-9]* refs/heads/(.*)$", output)
+                        if branch is None:
+                            raise TaskError(
+                                "No branch is found inside the bundle.", details=output
+                            )
+                        process = subprocess.run(
+                            ["git", "clone", "-b", branch.group(1), path, code_dir],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                        )
+                        output = process.stdout.decode()
+                        self.log(output)
+                        if process.returncode:
+                            raise TaskError(
+                                f"Process exited with exit code: {process.returncode}",
+                                details=output,
                             )
                         self.app.call_from_thread(
                             self.notify, "Cloned submitted repository"
