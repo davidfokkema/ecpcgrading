@@ -279,6 +279,13 @@ class CreateEnvTask(Task):
         if python_version == "*":
             if (p := (code_dir / ".python-version")).is_file():
                 python_version = p.open().readline().rstrip("\n")
+            else:
+                self.notify(
+                    "Environment not created. Cannot determine Python version from .python-version.",
+                    severity="warning",
+                )
+                return
+
         command = f"uv venv --python {python_version} --clear"
         if self.env.package_spec:
             command += f" && uv pip install {self.env.package_spec}"
