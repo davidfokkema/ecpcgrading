@@ -272,14 +272,20 @@ class CreateEnvTask(Task):
 
     @work(thread=True, exit_on_error=False)
     def run_task(self):
-        command = f"uv venv --python {self.env.python_version} --clear"
+        code_dir = get_code_dir(
+            self.app.config, self._assignment, self._student, check_subdir=True
+        )
+        python_version = self.env.python_version
+        if python_version == "*":
+            if (p := (code_dir / ".python-version")).is_file():
+                python_version = p.open().readline().rstrip("\n")
+        command = f"uv venv --python {python_version} --clear"
         if self.env.package_spec:
             command += f" && uv pip install {self.env.package_spec}"
+
         process = subprocess.run(
             command,
-            cwd=get_code_dir(
-                self.app.config, self._assignment, self._student, check_subdir=True
-            ),
+            cwd=code_dir,
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -293,7 +299,7 @@ class CreateEnvTask(Task):
             raise TaskError(
                 f"Process exited with exit code: {process.returncode}", details=output
             )
-        self.app.call_from_thread(self.notify, "Created clean environment")
+        self.notify(f"Created clean environment ({python_version})")
 
 
 class OpenCodeTask(Task):
