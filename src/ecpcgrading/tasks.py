@@ -315,6 +315,13 @@ class OpenCodeTask(Task):
         if not code_dir.exists():
             raise RuntimeError("Please download and extract submission first.")
 
+        # find pyproject.toml and Python files in src/ folder
+        code_paths = []
+        if (p := code_dir / "pyproject.toml").exists():
+            code_paths.append(str(p))
+        code_paths.extend([f'"{str(p)}"' for p in code_dir.glob("src/**/*.py")])
+        path_args = " ".join(code_paths)
+
         env = os.environ
         # find Python interpreter in .venv
         for path in [Path(".venv/bin/python"), Path(".venv/Scripts/python.exe")]:
@@ -324,7 +331,7 @@ class OpenCodeTask(Task):
 
         # start VS Code
         process = subprocess.run(
-            f'code "{code_dir}"',
+            f'code "{code_dir}" {path_args}',
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

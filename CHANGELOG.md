@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Creating a venv can take the version from the .python-version file.
+- Automatically open pyproject.toml and all Python files in the src/ directory.
 
 ## [1.6.0] - 2025-10-30
 
