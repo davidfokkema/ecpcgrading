@@ -325,9 +325,10 @@ class OpenCodeTask(Task):
         # find pyproject.toml and Python files in src/ folder
         code_paths = []
         if (p := code_dir / "pyproject.toml").exists():
-            code_paths.append(str(p))
-        code_paths.extend([f'"{str(p)}"' for p in code_dir.glob("src/**/*.py")])
-        path_args = " ".join(code_paths)
+            code_paths.append(p)
+        code_paths.extend([p for p in code_dir.glob("src/**/*.py")])
+        # filter out __init__.py
+        code_paths = [p for p in code_paths if not p.name == "__init__.py"]
 
         env = os.environ
         # find Python interpreter in .venv
@@ -337,6 +338,8 @@ class OpenCodeTask(Task):
                 break
 
         # start VS Code
+        path_args = " ".join([f'"{p}"' for p in code_paths])
+        print(f'code "{code_dir}" {path_args}')
         process = subprocess.run(
             f'code "{code_dir}" {path_args}',
             shell=True,
