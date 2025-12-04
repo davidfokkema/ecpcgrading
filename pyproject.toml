@@ -1,6 +1,6 @@
 [project]
 name = "ecpcgrading"
-version = "1.7.0"
+version = "1.7.1"
 description = "Code grading tool for ECPC"
 readme = "README.md"
 authors = [{ name = "David Fokkema", email = "davidfokkema@icloud.com" }]
