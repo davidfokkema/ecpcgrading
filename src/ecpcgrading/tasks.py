@@ -216,26 +216,8 @@ class DecompressCodeTask(Task):
                         )
                     case ".bundle":
                         # a bundle file (new submission format)
-                        # list heads (branches)
                         process = subprocess.run(
-                            ["git", "bundle", "list-heads", path],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
-                        )
-                        output = process.stdout.decode()
-                        self.log(output)
-                        if process.returncode:
-                            raise TaskError(
-                                f"Process exited with exit code: {process.returncode}",
-                                details=output,
-                            )
-                        branch = re.match("[a-z0-9]* refs/heads/(.*)$", output)
-                        if branch is None:
-                            raise TaskError(
-                                "No branch is found inside the bundle.", details=output
-                            )
-                        process = subprocess.run(
-                            ["git", "clone", "-b", branch.group(1), path, code_dir],
+                            ["git", "clone", path, code_dir],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
                         )
