@@ -186,34 +186,14 @@ class StudentsScreen(Screen):
     @work(thread=True)
     def load_submission_info(self) -> None:
         t0 = time.time()
-        worker = get_current_worker()
         students = list(self.query(Student))
-        batch_size, remainder = divmod(len(students), CANVAS_POOL_SIZE)
-        if remainder:
-            batch_size += 1
-        threads = []
-        for idx in range(0, len(students), batch_size):
-            batch = students[idx : idx + batch_size]
-            thread = threading.Thread(
-                target=self.load_submission_info_task,
-                kwargs=dict(assignment=self.assignment, students=batch, worker=worker),
-            )
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()
+        student_lookup = {s._student.id: s for s in students}
+        self.notify("Loading submissions...")
+        submissions = self.app.canvas_tasks.get_submissions(self.assignment._assignment)
+        for submission in submissions:
+            student = student_lookup[submission.student_id]
+            student.submission = submission
         self.notify(f"Loaded submissions in {time.time() - t0:.1f} s.")
-
-    def load_submission_info_task(
-        self, assignment: Assignment, students: list[Student], worker: Worker
-    ) -> None:
-        for student in students:
-            if not worker.is_cancelled:
-                submission: CanvasSubmission = self.app.canvas_tasks.get_submissions(
-                    assignment._assignment, student._student
-                )
-            if not worker.is_cancelled:
-                student.submission = submission
 
     @on(Button.Pressed, "#back")
     def action_go_back(self) -> None:
