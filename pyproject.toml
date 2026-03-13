@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [{ name = "David Fokkema", email = "davidfokkema@icloud.com" }]
 requires-python = ">=3.11"
 dependencies = [
-    "canvas-course-tools>=0.12.0",
+    "canvas-course-tools>=0.15.0",
     "click>=8.1.8",
     "humanize>=4.11.0",
     "pydantic>=2.10.6",
