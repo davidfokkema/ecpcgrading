@@ -37,7 +37,7 @@ class CommentsScreen(ModalScreen):
     def compose(self) -> ComposeResult:
         with VerticalScroll(id="comments"):
             for comment in self.comments:
-                content = f"[dim]On {comment.created_at.ctime()}, [not dim bold]{comment.author_name}[/] wrote:[/]\n\n"
+                content = f"[dim]On {comment.created_at.astimezone().ctime()}, [not dim bold]{comment.author_name}[/] wrote:[/]\n\n"
                 content += comment.comment
                 if comment.author_name == self.student_name:
                     classes = "author"
