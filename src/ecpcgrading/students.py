@@ -191,8 +191,14 @@ class StudentsScreen(Screen):
         self.notify("Loading submissions...")
         submissions = self.app.canvas_tasks.get_submissions(self.assignment._assignment)
         for submission in submissions:
-            student = student_lookup[submission.student_id]
-            student.submission = submission
+            try:
+                student = student_lookup[submission.student_id]
+            except KeyError:
+                # Unassigned Students get a submission object but are not in the student list.
+                # Ignore unassigned students.
+                pass
+            else:
+                student.submission = submission
         self.notify(f"Loaded submissions in {time.time() - t0:.1f} s.")
 
     @on(Button.Pressed, "#back")

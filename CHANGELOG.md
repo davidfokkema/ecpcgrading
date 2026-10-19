@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix downloading submissions.
+- Fix crash when there are unassigned students in a group.
 
 ## [1.8.0] - 2026-03-13
 
