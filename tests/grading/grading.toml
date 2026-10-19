@@ -9,14 +9,15 @@ theme = "dracula"
 name = "clean venv, using .python-version"
 python_version = "*"
 
-[env.clean-312]
-name = "clean venv, using Python 3.12"
-python_version = "3.12"
+[env.clean-314]
+name = "clean venv, using Python 3.14"
+python_version = "3.14"
 
-[env.clean-313]
-name = "clean venv, using Python 3.13"
-python_version = "3.13"
+[env.clean-315]
+name = "clean venv, using Python 3.15"
+python_version = "3.15"
 
 [env.pyvisa]
 name = "PyVISA + pyserial + matplotlib"
 package_spec = "pyvisa-py pyserial matplotlib"
+python_version = "3.14"
