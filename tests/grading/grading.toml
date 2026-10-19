@@ -1,0 +1,22 @@
+course_alias = "ecpc25"
+assignment_group = "Experiment Control with Python Course (ECPC)"
+#groupset =
+#groupset =
+#group =
+theme = "dracula"
+
+[env.clean-auto]
+name = "clean venv, using .python-version"
+python_version = "*"
+
+[env.clean-312]
+name = "clean venv, using Python 3.12"
+python_version = "3.12"
+
+[env.clean-313]
+name = "clean venv, using Python 3.13"
+python_version = "3.13"
+
+[env.pyvisa]
+name = "PyVISA + pyserial + matplotlib"
+package_spec = "pyvisa-py pyserial matplotlib"
