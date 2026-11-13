@@ -419,6 +419,7 @@ class TasksScreen(Screen):
         Binding("e", "extract_submission", show=False),
         Binding("o", "open_vscode", show=False),
         ("s", "speedrun", "Speedrun"),
+        ("ctrl+s", "tool_assisted_speedrun", "Tool-assisted speedrun"),
     ]
 
     def __init__(self, assignment: Assignment, student: Student) -> None:
@@ -490,6 +491,18 @@ class TasksScreen(Screen):
             "#download_task",
             "#extract_task",
             "#create_env0_task",
+            "#open_vscode_task",
+        ]:
+            worker = await self.run_task_wait(task_id)
+            if worker.error:
+                # there was an error, abort speedrun
+                break
+
+    async def action_tool_assisted_speedrun(self) -> None:
+        for task_id in [
+            "#download_task",
+            "#extract_task",
+            "#create_env3_task",
             "#open_vscode_task",
         ]:
             worker = await self.run_task_wait(task_id)
