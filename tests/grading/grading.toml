@@ -4,6 +4,7 @@ assignment_group = "Experiment Control with Python Course (ECPC)"
 #groupset =
 #group =
 theme = "dracula"
+tool_assisted_speedrun_env_index = 3
 
 [env.clean-auto]
 name = "clean venv, using .python-version"

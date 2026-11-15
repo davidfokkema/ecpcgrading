@@ -24,6 +24,7 @@ class Config(BaseModel):
     groupset: str | None = None
     group: str | None = None
     env: dict[str, EnvironmentConfig]
+    tool_assisted_speedrun_env_index: int = 3
     theme: str = "textual-dark"
 
 

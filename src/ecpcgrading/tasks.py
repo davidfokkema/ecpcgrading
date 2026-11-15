@@ -499,16 +499,10 @@ class TasksScreen(Screen):
                 break
 
     async def action_tool_assisted_speedrun(self) -> None:
-        environments = list(self.app.config.env.keys())
-        pyvisa_index = 0
-
-        if "pyvisa" in environments:
-            pyvisa_index = environments.index("pyvisa")
-
         for task_id in [
             "#download_task",
             "#extract_task",
-            f"#create_env{pyvisa_index}_task",
+            f"#create_env{self.app.config.tool_assisted_speedrun_env_index}_task",
             "#open_vscode_task",
         ]:
             worker = await self.run_task_wait(task_id)
