@@ -419,7 +419,7 @@ class TasksScreen(Screen):
         Binding("e", "extract_submission", show=False),
         Binding("o", "open_vscode", show=False),
         ("s", "speedrun", "Speedrun"),
-        ("ctrl+s", "tool_assisted_speedrun", "Tool-assisted speedrun"),
+        ("ctrl+s", "tool_assisted_speedrun", "Tool-Assisted Speedrun"),
     ]
 
     def __init__(self, assignment: Assignment, student: Student) -> None:
