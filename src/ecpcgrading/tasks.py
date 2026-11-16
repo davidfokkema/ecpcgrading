@@ -499,10 +499,16 @@ class TasksScreen(Screen):
                 break
 
     async def action_tool_assisted_speedrun(self) -> None:
+        try:
+            envs = list(self.app.config.env.keys())
+            tas_index = envs.index(self.app.config.tool_assisted_speedrun_env)
+        except ValueError:
+            tas_index = 0
+
         for task_id in [
             "#download_task",
             "#extract_task",
-            f"#create_env{self.app.config.tool_assisted_speedrun_env_index}_task",
+            f"#create_env{tas_index}_task",
             "#open_vscode_task",
         ]:
             worker = await self.run_task_wait(task_id)
